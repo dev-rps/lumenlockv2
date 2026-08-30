@@ -7,6 +7,7 @@ import { ListingCard } from "@/app/components/marketplace/ListingCard";
 import { ListingCardSkeleton } from "@/app/components/ui/Skeleton";
 import { Button } from "@/app/components/ui/Button";
 import { Search, SlidersHorizontal, PlusCircle, Layers, Grid, List, Sparkles } from "@/app/components/ui/Icons";
+import type { Listing } from "@/app/types";
 
 export default function MarketplacePage() {
   const { data: listings, isLoading } = useListings();
@@ -24,7 +25,7 @@ export default function MarketplacePage() {
     if (!listings) return [];
 
     return listings
-      .filter((listing) => {
+      .filter((listing: Listing) => {
         const matchesSearch =
           listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           listing.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -42,7 +43,7 @@ export default function MarketplacePage() {
 
         return matchesSearch && matchesCategory && matchesAsset && matchesMilestone;
       })
-      .sort((a, b) => {
+      .sort((a: Listing, b: Listing) => {
         if (sortBy === "price-asc") return parseFloat(a.price) - parseFloat(b.price);
         if (sortBy === "price-desc") return parseFloat(b.price) - parseFloat(a.price);
         return b.createdAt - a.createdAt;
@@ -155,7 +156,7 @@ export default function MarketplacePage() {
         </div>
       ) : filteredListings.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredListings.map((listing) => (
+          {filteredListings.map((listing: Listing) => (
             <ListingCard key={listing.id} listing={listing} />
           ))}
         </div>

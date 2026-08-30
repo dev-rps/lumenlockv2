@@ -24,6 +24,7 @@ import {
   TrendingUp,
   Zap,
 } from "@/app/components/ui/Icons";
+import type { Listing } from "@/app/types";
 
 export default function HomePage() {
   const { data: listings, isLoading } = useListings();
@@ -264,7 +265,7 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {featuredListings.map((listing) => (
+            {featuredListings.map((listing: Listing) => (
               <ListingCard key={listing.id} listing={listing} />
             ))}
           </div>

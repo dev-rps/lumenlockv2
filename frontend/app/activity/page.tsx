@@ -16,6 +16,7 @@ import {
   Clock,
   RefreshCw,
 } from "@/app/components/ui/Icons";
+import type { ContractEvent } from "@/app/types";
 
 export default function ActivityPage() {
   const { data: events, isLoading, refetch, isRefetching } = useContractEvents();
@@ -56,7 +57,7 @@ export default function ActivityPage() {
     }
   };
 
-  const filteredEvents = (events || []).filter((e) => {
+  const filteredEvents = (events || []).filter((e: ContractEvent) => {
     if (filterType === "all") return true;
     return e.type.includes(filterType);
   });
@@ -119,7 +120,7 @@ export default function ActivityPage() {
             Polling contract topics...
           </div>
         ) : filteredEvents.length > 0 ? (
-          filteredEvents.map((evt) => (
+          filteredEvents.map((evt: ContractEvent) => (
             <Card
               key={evt.id}
               className="p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-slate-300 transition"

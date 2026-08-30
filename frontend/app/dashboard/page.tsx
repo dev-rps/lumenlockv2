@@ -22,6 +22,7 @@ import {
   ExternalLink,
   Lock,
 } from "@/app/components/ui/Icons";
+import type { EscrowRecord, Listing } from "@/app/types";
 
 export default function DashboardPage() {
   const { isConnected, address, setModalOpen } = useWalletStore();
@@ -30,15 +31,15 @@ export default function DashboardPage() {
 
   const [activeTab, setActiveTab] = useState<"buyer" | "seller" | "listings" | "disputes">("buyer");
 
-  const myListings = (listings || []).filter((l) => isConnected && l.seller === address);
+  const myListings = (listings || []).filter((l: Listing) => isConnected && l.seller === address);
   const isArbiter = isConnected && address === STELLAR_CONFIG.arbiterAddress;
 
   const totalSecuredVolume = (userEscrows?.buyerEscrows || []).reduce(
-    (acc, e) => acc + (parseFloat(e.amount) || 0),
+    (acc: number, e: EscrowRecord) => acc + (parseFloat(e.amount) || 0),
     0
   );
 
-  const activeEscrowsCount = (userEscrows?.buyerEscrows || []).filter((e) =>
+  const activeEscrowsCount = (userEscrows?.buyerEscrows || []).filter((e: EscrowRecord) =>
     ["Created", "Funded", "PartiallyReleased", "Disputed"].includes(e.state)
   ).length;
 
@@ -148,7 +149,7 @@ export default function DashboardPage() {
         <div className="space-y-4">
           {userEscrows?.buyerEscrows && userEscrows.buyerEscrows.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {userEscrows.buyerEscrows.map((escrow) => (
+              {userEscrows.buyerEscrows.map((escrow: EscrowRecord) => (
                 <Link
                   key={escrow.escrowId}
                   href={`/escrow/${escrow.escrowId}`}
@@ -206,7 +207,7 @@ export default function DashboardPage() {
         <div className="space-y-4">
           {userEscrows?.sellerEscrows && userEscrows.sellerEscrows.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {userEscrows.sellerEscrows.map((escrow) => (
+              {userEscrows.sellerEscrows.map((escrow: EscrowRecord) => (
                 <Link
                   key={escrow.escrowId}
                   href={`/escrow/${escrow.escrowId}`}
@@ -255,7 +256,7 @@ export default function DashboardPage() {
         <div className="space-y-4">
           {myListings.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {myListings.map((listing) => (
+              {myListings.map((listing: Listing) => (
                 <Link
                   key={listing.id}
                   href={`/marketplace/${listing.id}`}
