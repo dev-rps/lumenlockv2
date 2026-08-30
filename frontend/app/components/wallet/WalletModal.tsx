@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Loader2,
   RefreshCw,
+  Sparkles,
 } from "@/app/components/ui/Icons";
 import { Button } from "@/app/components/ui/Button";
 import { fetchAccountBalances } from "@/app/services/stellar";
@@ -81,12 +82,35 @@ export function WalletModal() {
     setConnecting(true);
 
     try {
-      const { StellarWalletsKit } = await import("@creit.tech/stellar-wallets-kit");
+      let publicKey: string | null = null;
 
-      StellarWalletsKit.setWallet(walletId);
-      const { address: publicKey } = await StellarWalletsKit.getAddress();
+      // 1. Try via StellarWalletsKit
+      try {
+        const { StellarWalletsKit } = await import("@creit.tech/stellar-wallets-kit");
+        StellarWalletsKit.setWallet(walletId);
+        const res = await StellarWalletsKit.getAddress();
+        publicKey = res?.address || null;
+      } catch (kitErr) {
+        console.warn("[WalletModal] Kit getAddress failed, trying native window provider fallback...", kitErr);
+      }
 
-      if (!publicKey) throw new Error("No public key returned from wallet.");
+      // 2. Direct Window Provider Fallback (e.g. window.freighter or window.stellar)
+      if (!publicKey && walletId === "freighter" && typeof window !== "undefined") {
+        const winAny = window as any;
+        if (winAny.freighter) {
+          const isAllowed = await winAny.freighter.isConnected();
+          if (isAllowed) {
+            await winAny.freighter.requestAccess();
+            publicKey = await winAny.freighter.getPublicKey();
+          }
+        }
+      }
+
+      if (!publicKey) {
+        throw new Error(
+          "Could not get public key from wallet. Please make sure the browser extension is unlocked and you approved the connection request."
+        );
+      }
 
       try {
         const { xlm, usdc } = await fetchAccountBalances(publicKey);
@@ -101,13 +125,35 @@ export function WalletModal() {
         title: "Wallet Connected",
         description: `Connected: ${truncateAddress(publicKey, 6, 4)}`,
       });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to connect wallet";
-      addToast({ type: "error", title: "Connection Failed", description: msg });
+    } catch (err: any) {
+      let msg = "Failed to connect wallet";
+      if (typeof err === "string") {
+        msg = err;
+      } else if (err && typeof err === "object") {
+        msg = err.message || err.error || String(err);
+      }
+
+      addToast({
+        type: "error",
+        title: "Connection Error",
+        description: msg,
+      });
     } finally {
       setConnectingId(null);
       setConnecting(false);
     }
+  };
+
+  const handleDemoConnect = () => {
+    const demoKey = "GBV2LUMENLOCKBUYERDEMOACCOUNT77777777777777777777777777777";
+    setConnected(demoKey, "TESTNET");
+    setBalances("10,000", "500");
+    setModalOpen(false);
+    addToast({
+      type: "info",
+      title: "Testnet Demo Account Active",
+      description: "Connected to Stellar Testnet simulated signer session.",
+    });
   };
 
   const handleDisconnect = async () => {
@@ -222,7 +268,7 @@ export function WalletModal() {
         </div>
       ) : (
         /* ── WALLET SELECTION STATE ── */
-        <div className="space-y-2.5 pt-2">
+        <div className="space-y-3 pt-2">
           {walletsLoading ? (
             <div className="flex flex-col items-center gap-3 py-10 text-slate-500">
               <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
@@ -231,83 +277,102 @@ export function WalletModal() {
           ) : sortedWallets.length === 0 ? (
             <div className="py-8 text-center space-y-3">
               <AlertCircle className="w-8 h-8 text-slate-400 mx-auto" />
-              <p className="text-sm text-slate-600">No wallets detected</p>
+              <p className="text-sm text-slate-600">No extension wallets detected</p>
               <Button size="sm" variant="outline" onClick={loadWallets} leftIcon={<RefreshCw className="w-3.5 h-3.5" />}>Retry</Button>
             </div>
           ) : (
-            sortedWallets.map((wallet) => {
-              const isThis = connectingId === wallet.id;
-              return (
-                <button
-                  key={wallet.id}
-                  onClick={() => wallet.isAvailable && handleConnect(wallet.id)}
-                  disabled={!!connectingId || !wallet.isAvailable}
-                  className={[
-                    "w-full flex items-center justify-between p-3.5 rounded-xl border transition-all text-left group",
-                    wallet.isAvailable
-                      ? "border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 cursor-pointer"
-                      : "border-slate-100 bg-slate-50/40 opacity-50 cursor-not-allowed",
-                    isThis ? "border-blue-500 bg-blue-50" : "",
-                  ].filter(Boolean).join(" ")}
-                >
-                  <div className="flex items-center gap-3">
-                    {/* Real wallet icon from the kit */}
-                    {wallet.icon ? (
-                      <img
-                        src={wallet.icon}
-                        alt={wallet.name}
-                        width={36}
-                        height={36}
-                        className="w-9 h-9 rounded-xl object-contain bg-white border border-slate-200 p-1"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                      />
-                    ) : (
-                      <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center">
-                        <Wallet className="w-5 h-5 text-slate-500" />
-                      </div>
-                    )}
+            <div className="space-y-2">
+              {sortedWallets.map((wallet) => {
+                const isThis = connectingId === wallet.id;
+                return (
+                  <button
+                    key={wallet.id}
+                    onClick={() => handleConnect(wallet.id)}
+                    disabled={!!connectingId}
+                    className={[
+                      "w-full flex items-center justify-between p-3.5 rounded-xl border transition-all text-left group cursor-pointer",
+                      wallet.isAvailable
+                        ? "border-slate-200 hover:border-blue-400 hover:bg-blue-50/40"
+                        : "border-slate-200/80 bg-slate-50/50 hover:bg-slate-100/60",
+                      isThis ? "border-blue-500 bg-blue-50" : "",
+                    ].filter(Boolean).join(" ")}
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* Real wallet icon from the kit */}
+                      {wallet.icon ? (
+                        <img
+                          src={wallet.icon}
+                          alt={wallet.name}
+                          width={36}
+                          height={36}
+                          className="w-9 h-9 rounded-xl object-contain bg-white border border-slate-200 p-1"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center">
+                          <Wallet className="w-5 h-5 text-slate-500" />
+                        </div>
+                      )}
 
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-semibold text-slate-900 group-hover:text-blue-700 transition">{wallet.name}</h4>
-                        {wallet.isAvailable ? (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Detected</span>
-                        ) : (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">Not Installed</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-xs text-slate-500 capitalize">{wallet.type.toLowerCase().replace(/_/g, " ")}</p>
-                        {!wallet.isAvailable && wallet.url && (
-                          <a href={wallet.url} target="_blank" rel="noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-[10px] text-blue-500 hover:underline">
-                            Install →
-                          </a>
-                        )}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-semibold text-slate-900 group-hover:text-blue-700 transition">{wallet.name}</h4>
+                          {wallet.isAvailable ? (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Detected</span>
+                          ) : (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">Extension Needed</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <p className="text-xs text-slate-500 capitalize">{wallet.type.toLowerCase().replace(/_/g, " ")}</p>
+                          {!wallet.isAvailable && wallet.url && (
+                            <a href={wallet.url} target="_blank" rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-[10px] text-blue-600 font-medium hover:underline">
+                              Install Extension →
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="shrink-0">
-                    {isThis
-                      ? <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
-                      : <div className="w-6 h-6 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 group-hover:border-blue-500 group-hover:text-blue-600 transition">
-                          <Check className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition" />
-                        </div>
-                    }
-                  </div>
-                </button>
-              );
-            })
+                    <div className="shrink-0">
+                      {isThis
+                        ? <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                        : <div className="w-6 h-6 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 group-hover:border-blue-500 group-hover:text-blue-600 transition">
+                            <Check className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition" />
+                          </div>
+                      }
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           )}
 
-          <div className="rounded-xl bg-slate-50 border border-slate-200/80 p-3 mt-3 flex items-start gap-2.5">
+          {/* Quick Testnet Demo Fallback Button */}
+          <div className="pt-2">
+            <button
+              onClick={handleDemoConnect}
+              className="w-full flex items-center justify-between p-3 rounded-xl border border-dashed border-blue-300 bg-blue-50/50 hover:bg-blue-50 transition text-left group"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
+                  <Sparkles className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-blue-900">Instant Testnet Demo Wallet</h4>
+                  <p className="text-[11px] text-blue-700">Connect pre-funded test account without extensions</p>
+                </div>
+              </div>
+              <span className="text-xs font-semibold text-blue-600 group-hover:translate-x-0.5 transition-transform">Use 1-Click Demo →</span>
+            </button>
+          </div>
+
+          <div className="rounded-xl bg-slate-50 border border-slate-200/80 p-3 flex items-start gap-2.5">
             <AlertCircle className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
             <p className="text-[11px] text-slate-600 leading-relaxed">
-              LumenLock runs on <strong>Stellar Testnet</strong>. Install{" "}
-              <a href="https://www.freighter.app" target="_blank" rel="noreferrer" className="text-blue-600 font-semibold hover:underline">Freighter</a>{" "}
-              for the best experience. No real funds required.
+              <strong>Freighter Setup:</strong> Ensure the Freighter Chrome Extension is installed, unlocked with your password, and permissions are granted for <code className="bg-slate-200 px-1 py-0.5 rounded text-[10px]">localhost:3000</code>.
             </p>
           </div>
         </div>
