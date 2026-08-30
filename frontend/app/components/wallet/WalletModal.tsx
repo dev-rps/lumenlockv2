@@ -84,31 +84,70 @@ export function WalletModal() {
     try {
       let publicKey: string | null = null;
 
-      // 1. Try via StellarWalletsKit
-      try {
-        const { StellarWalletsKit } = await import("@creit.tech/stellar-wallets-kit");
-        StellarWalletsKit.setWallet(walletId);
-        const res = await StellarWalletsKit.getAddress();
-        publicKey = res?.address || null;
-      } catch (kitErr) {
-        console.warn("[WalletModal] Kit getAddress failed, trying native window provider fallback...", kitErr);
-      }
+      // Special direct handling for Freighter
+      if (walletId === "freighter") {
+        // Method A: @stellar/freighter-api
+        try {
+          const freighterApi = await import("@stellar/freighter-api");
+          const accessRes = await freighterApi.requestAccess();
+          if (accessRes?.address) {
+            publicKey = accessRes.address;
+          } else if (accessRes?.error) {
+            console.warn("[Freighter] requestAccess error:", accessRes.error);
+          } else {
+            const addrRes = await freighterApi.getAddress();
+            if (addrRes?.address) publicKey = addrRes.address;
+          }
+        } catch (fErr) {
+          console.warn("[WalletModal] freighter-api requestAccess failed:", fErr);
+        }
 
-      // 2. Direct Window Provider Fallback (e.g. window.freighter or window.stellar)
-      if (!publicKey && walletId === "freighter" && typeof window !== "undefined") {
-        const winAny = window as any;
-        if (winAny.freighter) {
-          const isAllowed = await winAny.freighter.isConnected();
-          if (isAllowed) {
-            await winAny.freighter.requestAccess();
-            publicKey = await winAny.freighter.getPublicKey();
+        // Method B: Direct window.freighter call
+        if (!publicKey && typeof window !== "undefined") {
+          const winAny = window as any;
+          if (winAny.freighter) {
+            try {
+              if (typeof winAny.freighter.requestAccess === "function") {
+                const res = await winAny.freighter.requestAccess();
+                if (typeof res === "string" && res.length > 10) publicKey = res;
+                else if (res?.publicKey) publicKey = res.publicKey;
+                else if (res?.address) publicKey = res.address;
+              }
+              if (!publicKey && typeof winAny.freighter.getPublicKey === "function") {
+                publicKey = await winAny.freighter.getPublicKey();
+              }
+            } catch (wErr) {
+              console.warn("[WalletModal] window.freighter fallback failed:", wErr);
+            }
           }
         }
       }
 
+      // Method C: StellarWalletsKit fallback for all wallets
       if (!publicKey) {
+        try {
+          const { StellarWalletsKit } = await import("@creit.tech/stellar-wallets-kit");
+          StellarWalletsKit.setWallet(walletId);
+          const res = await StellarWalletsKit.getAddress();
+          publicKey = res?.address || null;
+        } catch (kitErr) {
+          console.warn("[WalletModal] StellarWalletsKit getAddress failed:", kitErr);
+        }
+      }
+
+      if (!publicKey) {
+        const isFreighterInstalled =
+          typeof window !== "undefined" &&
+          !!((window as any).freighter || (window as any).stellar?.provider === "freighter");
+
+        if (walletId === "freighter" && !isFreighterInstalled) {
+          throw new Error(
+            "Freighter extension is not installed in your browser. Click 'Install Extension' or use the Instant Testnet Demo Wallet below."
+          );
+        }
+
         throw new Error(
-          "Could not get public key from wallet. Please make sure the browser extension is unlocked and you approved the connection request."
+          "Could not get account address. Please unlock your wallet extension and accept the connection request prompt."
         );
       }
 
@@ -135,7 +174,7 @@ export function WalletModal() {
 
       addToast({
         type: "error",
-        title: "Connection Error",
+        title: "Connection Failed",
         description: msg,
       });
     } finally {
@@ -372,7 +411,7 @@ export function WalletModal() {
           <div className="rounded-xl bg-slate-50 border border-slate-200/80 p-3 flex items-start gap-2.5">
             <AlertCircle className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
             <p className="text-[11px] text-slate-600 leading-relaxed">
-              <strong>Freighter Setup:</strong> Ensure the Freighter Chrome Extension is installed, unlocked with your password, and permissions are granted for <code className="bg-slate-200 px-1 py-0.5 rounded text-[10px]">localhost:3000</code>.
+              <strong>Freighter Setup:</strong> If Freighter extension is installed in Chrome, make sure it is unlocked. Otherwise click <strong>Install Extension</strong> or use the <strong>Instant Testnet Demo Wallet</strong>.
             </p>
           </div>
         </div>
