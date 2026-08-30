@@ -1,278 +1,188 @@
-'use client';
+"use client";
 
-import { useActiveListings } from '../hooks/useListings';
-import { useWallet } from '../hooks/useWallet';
-import {
-  formatAmount,
-  formatAddress,
-  SUPPORTED_TOKENS,
-  type ListingData,
-} from '../types';
-import { Search, Plus, Milestone, ArrowRight, User } from 'lucide-react';
-import { useState } from 'react';
-import Link from 'next/link';
-import { StatusBadge } from '../components/ui/StatusBadge';
-import { Skeleton } from '../components/ui/Skeleton';
-import { EmptyState } from '../components/ui/EmptyState';
-import { ErrorState } from '../components/ui/ErrorState';
+import React, { useState, useMemo } from "react";
+import Link from "next/link";
+import { useListings } from "@/app/hooks/useListings";
+import { ListingCard } from "@/app/components/marketplace/ListingCard";
+import { ListingCardSkeleton } from "@/app/components/ui/Skeleton";
+import { Button } from "@/app/components/ui/Button";
+import { Search, SlidersHorizontal, PlusCircle, Layers, Grid, List, Sparkles } from "lucide-react";
 
-function getTokenSymbol(assetAddress: string): string {
-  for (const [symbol, info] of Object.entries(SUPPORTED_TOKENS)) {
-    if (info.address === assetAddress) return symbol;
-  }
-  return 'TOKEN';
-}
-
-// ─── Listing Card ──────────────────────────────────────────────────────────────
-function ListingCard({ listing }: { listing: ListingData }) {
-  const tokenSymbol = getTokenSymbol(listing.asset);
-  const hasMilestones = !!listing.milestone_config;
-  const priceDisplay = formatAmount(listing.price);
-
-  return (
-    <div
-      className="ll-card ll-card-hover flex flex-col"
-      style={{ padding: 'var(--spacing-3)', gap: 'var(--spacing-2)', cursor: 'default' }}
-    >
-      {/* Header: title + badges */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <h3 className="type-heading truncate" style={{ color: 'var(--color-ink)' }}>
-            {listing.title}
-          </h3>
-          <div className="flex items-center gap-1.5 mt-1">
-            <User style={{ width: 13, height: 13, color: 'var(--color-ink-faint)', flexShrink: 0 }} />
-            <span className="type-mono-sm" style={{ color: 'var(--color-ink-faint)' }}>
-              {formatAddress(listing.seller)}
-            </span>
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-1.5 shrink-0">
-          <StatusBadge status={listing.status} />
-          {hasMilestones && (
-            <span
-              className="badge-base"
-              style={{
-                backgroundColor: 'var(--color-trust-soft)',
-                color: 'var(--color-trust)',
-              }}
-            >
-              <Milestone style={{ width: 11, height: 11 }} />
-              Milestones
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Description */}
-      <p
-        className="type-body-sm line-clamp-2 flex-1"
-        style={{ color: 'var(--color-ink-muted)' }}
-      >
-        {listing.description}
-      </p>
-
-      {/* Footer: price + CTA */}
-      <div
-        className="flex items-center justify-between"
-        style={{ paddingTop: 'var(--spacing-2)', borderTop: '1px solid var(--color-border)', marginTop: 'auto' }}
-      >
-        <div>
-          <p className="type-caption" style={{ color: 'var(--color-ink-faint)', marginBottom: 4 }}>
-            Price
-          </p>
-          <p className="type-mono" style={{ color: 'var(--color-ink)' }}>
-            {priceDisplay}{' '}
-            <span style={{ color: 'var(--color-accent)' }}>{tokenSymbol}</span>
-          </p>
-        </div>
-        {listing.status === 'Active' && (
-          <Link
-            href={`/marketplace/${listing.listing_id}`}
-            className="btn-primary"
-            style={{ padding: '8px 18px', fontSize: '0.875rem' }}
-          >
-            Buy Now →
-          </Link>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Skeleton Card ────────────────────────────────────────────────────────────
-function ListingCardSkeleton() {
-  return (
-    <div className="ll-card flex flex-col" style={{ padding: 'var(--spacing-3)', gap: 'var(--spacing-2)' }}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <Skeleton height={20} width="75%" />
-          <Skeleton height={14} width="45%" />
-        </div>
-        <Skeleton height={22} width={64} style={{ borderRadius: 9999 }} />
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <Skeleton height={14} width="100%" />
-        <Skeleton height={14} width="80%" />
-      </div>
-      <div
-        className="flex items-center justify-between"
-        style={{ paddingTop: 'var(--spacing-2)', borderTop: '1px solid var(--color-border)' }}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <Skeleton height={10} width={36} />
-          <Skeleton height={24} width={80} />
-        </div>
-        <Skeleton height={36} width={90} style={{ borderRadius: 9999 }} />
-      </div>
-    </div>
-  );
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function MarketplacePage() {
-  const { data: listings, isLoading, error, refetch } = useActiveListings();
-  const { isConnected } = useWallet();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'Active' | 'Locked' | 'Completed'>('all');
+  const { data: listings, isLoading } = useListings();
 
-  const filtered = listings?.filter((l) => {
-    const matchesSearch =
-      l.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      l.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || l.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [selectedAsset, setSelectedAsset] = useState<string>("All");
+  const [milestoneOnly, setMilestoneOnly] = useState(false);
+  const [sortBy, setSortBy] = useState<"newest" | "price-asc" | "price-desc">("newest");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  const filterLabels: Array<{ value: 'all' | 'Active' | 'Locked' | 'Completed'; label: string }> = [
-    { value: 'all',       label: 'All' },
-    { value: 'Active',    label: 'Active' },
-    { value: 'Locked',    label: 'Locked' },
-    { value: 'Completed', label: 'Completed' },
-  ];
+  const categories = ["All", "Development", "Design", "Consulting", "Marketing", "Digital Asset"];
+
+  const filteredListings = useMemo(() => {
+    if (!listings) return [];
+
+    return listings
+      .filter((listing) => {
+        const matchesSearch =
+          listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          listing.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          listing.seller.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const matchesCategory =
+          selectedCategory === "All" || listing.category === selectedCategory;
+
+        const matchesAsset =
+          selectedAsset === "All" || listing.assetSymbol === selectedAsset;
+
+        const matchesMilestone =
+          !milestoneOnly ||
+          (listing.milestoneConfig && listing.milestoneConfig.percentages.length > 0);
+
+        return matchesSearch && matchesCategory && matchesAsset && matchesMilestone;
+      })
+      .sort((a, b) => {
+        if (sortBy === "price-asc") return parseFloat(a.price) - parseFloat(b.price);
+        if (sortBy === "price-desc") return parseFloat(b.price) - parseFloat(a.price);
+        return b.createdAt - a.createdAt;
+      });
+  }, [listings, searchQuery, selectedCategory, selectedAsset, milestoneOnly, sortBy]);
 
   return (
-    <div className="container-wide" style={{ paddingTop: 'var(--spacing-8)', paddingBottom: 'var(--spacing-8)' }}>
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between" style={{ gap: 'var(--spacing-3)', marginBottom: 'var(--spacing-4)' }}>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 space-y-8">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <p className="type-caption" style={{ color: 'var(--color-accent)', marginBottom: 'var(--spacing-1)' }}>
-            P2P EXCHANGE
-          </p>
-          <h1 className="type-display-lg" style={{ color: 'var(--color-ink)', marginBottom: 'var(--spacing-1)' }}>
-            Marketplace
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold mb-2">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Soroban Testnet Escrow Marketplace</span>
+          </div>
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900">
+            Explore Verified Escrow Listings
           </h1>
-          {isLoading ? (
-            <Skeleton height={16} width={180} />
-          ) : (
-            <p className="type-body-sm" style={{ color: 'var(--color-ink-muted)' }}>
-              {listings?.length ?? 0} listing{listings?.length !== 1 ? 's' : ''} — all backed by Soroban escrow
-            </p>
-          )}
+          <p className="text-sm text-slate-500 mt-1">
+            Browse services and digital products backed by trustless bilateral smart contracts.
+          </p>
         </div>
-        {isConnected && (
-          <Link
-            href="/dashboard?action=create"
-            className="btn-primary w-fit"
-            id="create-listing-btn"
-          >
-            <Plus style={{ width: 16, height: 16 }} />
+
+        <Link href="/create">
+          <Button leftIcon={<PlusCircle className="w-4 h-4" />}>
             Create Listing
-          </Link>
-        )}
+          </Button>
+        </Link>
       </div>
 
-      {/* Search */}
-      <div className="relative" style={{ marginBottom: 'var(--spacing-2)' }}>
-        <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none shrink-0"
-          style={{ width: 18, height: 18, color: 'var(--color-ink-faint)' }}
-        />
-        <input
-          type="text"
-          placeholder="Search listings…"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="ll-input"
-          style={{ paddingLeft: '2.5rem' }}
-          aria-label="Search marketplace listings"
-          id="marketplace-search"
-        />
+      {/* Filter and Search Bar */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+        {/* Search Input */}
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by title, description, or seller address..."
+            className="w-full pl-9 pr-4 py-2 text-xs md:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-slate-900 placeholder:text-slate-400"
+          />
+        </div>
+
+        {/* Filters Group */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+          {/* Asset Selector */}
+          <select
+            value={selectedAsset}
+            onChange={(e) => setSelectedAsset(e.target.value)}
+            className="px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:ring-2 focus:ring-blue-500/20"
+          >
+            <option value="All">All Assets</option>
+            <option value="XLM">XLM Only</option>
+            <option value="USDC">USDC Only</option>
+          </select>
+
+          {/* Sort By */}
+          <select
+            value={sortBy}
+            onChange={(e: any) => setSortBy(e.target.value)}
+            className="px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:ring-2 focus:ring-blue-500/20"
+          >
+            <option value="newest">Newest First</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+          </select>
+
+          {/* Milestone Toggle */}
+          <button
+            onClick={() => setMilestoneOnly(!milestoneOnly)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition shrink-0 ${
+              milestoneOnly
+                ? "bg-blue-50 border-blue-300 text-blue-700 shadow-xs"
+                : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Milestones Only</span>
+          </button>
+        </div>
       </div>
 
-      {/* Filter tabs */}
-      <div
-        className="flex flex-wrap items-center"
-        style={{ gap: 'var(--spacing-1)', marginBottom: 'var(--spacing-4)' }}
-      >
-        {filterLabels.map(({ value, label }) => {
-          const active = statusFilter === value;
+      {/* Category Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+        {categories.map((cat) => {
+          const isSelected = selectedCategory === cat;
           return (
             <button
-              key={value}
-              onClick={() => setStatusFilter(value)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '6px 16px',
-                whiteSpace: 'nowrap',
-                borderRadius: 'var(--radius-pill)',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                fontFamily: 'var(--font-ui)',
-                border: `1px solid ${active ? 'var(--color-accent-border)' : 'var(--color-border)'}`,
-                backgroundColor: active ? 'var(--color-accent-soft)' : 'transparent',
-                color: active ? 'var(--color-accent)' : 'var(--color-ink-muted)',
-                transition: 'all 150ms',
-                cursor: 'pointer',
-              }}
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all shrink-0 cursor-pointer ${
+                isSelected
+                  ? "bg-slate-900 text-white border-slate-900 shadow-xs"
+                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
+              }`}
             >
-              {label}
+              {cat}
             </button>
           );
         })}
       </div>
 
-      {/* Content */}
+      {/* Listings Grid / List */}
       {isLoading ? (
-        <div className="card-grid marketplace-listing-grid" style={{ gap: 'var(--spacing-2)' }}>
-          {[...Array(6)].map((_, i) => <ListingCardSkeleton key={i} />)}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <ListingCardSkeleton key={i} />
+          ))}
         </div>
-      ) : error ? (
-        <ErrorState
-          title="Couldn't load listings"
-          message={error instanceof Error ? error.message : 'Check your connection and try again.'}
-          onRetry={() => refetch()}
-        />
-      ) : filtered && filtered.length > 0 ? (
-        <div className="card-grid marketplace-listing-grid" style={{ gap: 'var(--spacing-2)' }}>
-          {filtered.map((listing) => (
-            <ListingCard key={listing.listing_id.toString()} listing={listing} />
+      ) : filteredListings.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredListings.map((listing) => (
+            <ListingCard key={listing.id} listing={listing} />
           ))}
         </div>
       ) : (
-        <EmptyState
-          title={searchQuery ? 'No listings match your search' : 'No listings yet'}
-          description={
-            searchQuery
-              ? 'Try a different search term or clear the filter.'
-              : isConnected
-              ? 'No listings yet — be the first to create one.'
-              : 'Connect your wallet to create or buy listings.'
-          }
-          action={
-            isConnected && !searchQuery ? (
-              <Link href="/dashboard?action=create" className="btn-primary" id="marketplace-create-first-btn">
-                <Plus style={{ width: 16, height: 16 }} />
-                Create Listing
-              </Link>
-            ) : searchQuery ? (
-              <button onClick={() => setSearchQuery('')} className="btn-ghost">
-                Clear search
-              </button>
-            ) : undefined
-          }
-        />
+        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center max-w-lg mx-auto space-y-4 shadow-sm">
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+            <Search className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-base font-bold text-slate-900">No Listings Found</h3>
+            <p className="text-xs text-slate-500">
+              Try adjusting your search query, clearing filters, or create a brand new listing.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSearchQuery("");
+              setSelectedCategory("All");
+              setSelectedAsset("All");
+              setMilestoneOnly(false);
+            }}
+          >
+            Reset All Filters
+          </Button>
+        </div>
       )}
     </div>
   );
