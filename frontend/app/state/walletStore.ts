@@ -1,87 +1,59 @@
-/**
- * Wallet Store — Zustand global state for wallet connection
- *
- * Manages wallet connection status, address, network, and error state.
- * This is the single source of truth for wallet state across the entire app.
- * Components read from this store; the StellarWalletsKit service writes to it.
- */
+"use client";
 
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import type { WalletConnectStatus } from '../types';
+import { create } from "zustand";
+import { WalletState } from "@/app/types";
 
-interface WalletStore {
-  // State
-  status: WalletConnectStatus;
-  address: string | null;
-  network: string | null;
-  walletId: string | null;
-  error: string | null;
-  isFreighterInstalled: boolean | null;
-
-  // Actions
-  setConnecting: () => void;
-  setConnected: (address: string, network: string, walletId: string) => void;
+interface WalletStore extends WalletState {
+  isModalOpen: boolean;
+  selectedWalletId: string | null;
+  setConnected: (address: string, network?: string) => void;
   setDisconnected: () => void;
-  setError: (error: string) => void;
-  clearError: () => void;
-  setFreighterInstalled: (installed: boolean) => void;
-  setNetwork: (network: string | null) => void;
+  setBalances: (xlm: string, usdc: string) => void;
+  setConnecting: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  setModalOpen: (open: boolean) => void;
+  setSelectedWalletId: (walletId: string | null) => void;
 }
 
-export const useWalletStore = create<WalletStore>()(
-  persist(
-    (set) => ({
-      // Initial state
-      status: 'disconnected',
-      address: null,
-      network: null,
-      walletId: null,
+export const useWalletStore = create<WalletStore>((set) => ({
+  isConnected: false,
+  address: null,
+  network: process.env.NEXT_PUBLIC_STELLAR_NETWORK || "TESTNET",
+  xlmBalance: "0",
+  usdcBalance: "0",
+  isConnecting: false,
+  error: null,
+  isModalOpen: false,
+  selectedWalletId: null,
+
+  setConnected: (address, network) =>
+    set((state) => ({
+      isConnected: true,
+      address,
+      network: network || state.network,
+      isConnecting: false,
       error: null,
-      isFreighterInstalled: null,
+      isModalOpen: false,
+    })),
 
-      // Actions
-      setConnecting: () =>
-        set({ status: 'connecting', error: null }),
-
-      setConnected: (address, network, walletId) =>
-        set({
-          status: 'connected',
-          address,
-          network,
-          walletId,
-          error: null,
-        }),
-
-      setDisconnected: () =>
-        set({
-          status: 'disconnected',
-          address: null,
-          network: null,
-          walletId: null,
-          error: null,
-        }),
-
-      setError: (error) =>
-        set({ status: 'error', error }),
-
-      clearError: () =>
-        set({ error: null }),
-
-      setFreighterInstalled: (installed) =>
-        set({ isFreighterInstalled: installed }),
-
-      setNetwork: (network) =>
-        set({ network }),
+  setDisconnected: () =>
+    set({
+      isConnected: false,
+      address: null,
+      xlmBalance: "0",
+      usdcBalance: "0",
+      isConnecting: false,
+      error: null,
     }),
-    {
-      name: 'lumenlock-wallet',
-      // Only persist the connection info, not the status (reconnect on load)
-      partialize: (state) => ({
-        walletId: state.walletId,
-        address: state.address,
-        network: state.network,
-      }),
-    },
-  ),
-);
+
+  setBalances: (xlmBalance, usdcBalance) =>
+    set({
+      xlmBalance,
+      usdcBalance,
+    }),
+
+  setConnecting: (isConnecting) => set({ isConnecting }),
+  setError: (error) => set({ error, isConnecting: false }),
+  setModalOpen: (isModalOpen) => set({ isModalOpen }),
+  setSelectedWalletId: (selectedWalletId) => set({ selectedWalletId }),
+}));

@@ -1,29 +1,25 @@
-'use client';
+"use client";
 
-import { QueryClient, QueryClientProvider as TanstackProvider } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
-import { getEventPoller } from '../services/events';
+import React, { useState } from "react";
+import { QueryClient, QueryClientProvider as TanstackQueryClientProvider } from "@tanstack/react-query";
 
-export function QueryClientProvider({ children }: { children: React.ReactNode }) {
+export default function QueryClientProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 5_000,
-            retry: 2,
-            refetchOnWindowFocus: false,
+            staleTime: 1000 * 5, // 5 seconds
+            refetchInterval: 1000 * 10, // 10 seconds background refetch
+            retry: 1,
           },
         },
-      }),
+      })
   );
 
-  // Start event poller when app mounts
-  useEffect(() => {
-    const poller = getEventPoller();
-    poller.start();
-    return () => poller.stop();
-  }, []);
-
-  return <TanstackProvider client={queryClient}>{children}</TanstackProvider>;
+  return (
+    <TanstackQueryClientProvider client={queryClient}>
+      {children}
+    </TanstackQueryClientProvider>
+  );
 }

@@ -1,55 +1,44 @@
-/**
- * Toast Notification Store — Zustand global state
- *
- * Manages premium transient notifications (toasts) displayed to the user.
- * Supports success, error, info, and warning states with auto-dismiss.
- */
+"use client";
 
-import { create } from 'zustand';
-import { nanoid } from './nanoid';
+import { create } from "zustand";
+import { TransactionToast } from "@/app/types";
 
-export type ToastType = 'success' | 'error' | 'info' | 'warning';
-
-export interface ToastItem {
-  id: string;
-  type: ToastType;
-  title: string;
-  message: string;
-  duration?: number;
-}
-
-interface ToastStore {
-  toasts: ToastItem[];
-  addToast: (type: ToastType, title: string, message: string, duration?: number) => string;
+interface ToastState {
+  toasts: TransactionToast[];
+  addToast: (toast: Omit<TransactionToast, "id">) => string;
   removeToast: (id: string) => void;
-  success: (title: string, message: string, duration?: number) => void;
-  error: (title: string, message: string, duration?: number) => void;
-  info: (title: string, message: string, duration?: number) => void;
-  warning: (title: string, message: string, duration?: number) => void;
+  clearAll: () => void;
 }
 
-export const useToastStore = create<ToastStore>()((set, get) => ({
+let toastIdCounter = 0;
+
+export const useToastStore = create<ToastState>((set) => ({
   toasts: [],
+  addToast: (toast) => {
+    const id = `toast-${Date.now()}-${++toastIdCounter}`;
+    const newToast: TransactionToast = {
+      id,
+      duration: toast.duration ?? 5000,
+      ...toast,
+    };
 
-  addToast: (type, title, message, duration = 4000) => {
-    const id = nanoid();
-    const item: ToastItem = { id, type, title, message, duration };
-    set((state) => ({ toasts: [...state.toasts, item] }));
+    set((state) => ({
+      toasts: [...state.toasts, newToast],
+    }));
 
-    if (duration > 0) {
+    if (newToast.type !== "loading") {
       setTimeout(() => {
-        get().removeToast(id);
-      }, duration);
+        set((state) => ({
+          toasts: state.toasts.filter((t) => t.id !== id),
+        }));
+      }, newToast.duration);
     }
 
     return id;
   },
-
   removeToast: (id) =>
-    set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
-
-  success: (title, message, duration) => get().addToast('success', title, message, duration),
-  error: (title, message, duration) => get().addToast('error', title, message, duration),
-  info: (title, message, duration) => get().addToast('info', title, message, duration),
-  warning: (title, message, duration) => get().addToast('warning', title, message, duration),
+    set((state) => ({
+      toasts: state.toasts.filter((t) => t.id !== id),
+    })),
+  clearAll: () => set({ toasts: [] }),
 }));

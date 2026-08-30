@@ -1,99 +1,69 @@
-'use client';
+"use client";
 
-import { useToastStore, type ToastItem, type ToastType } from '../../state/toastStore';
-import { CheckCircle2, XCircle, AlertCircle, Info, X } from 'lucide-react';
-
-const toastConfig: Record<
-  ToastType,
-  {
-    icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
-    borderColor: string;
-    iconColor: string;
-    titleColor: string;
-  }
-> = {
-  success: {
-    icon: CheckCircle2,
-    borderColor: 'var(--color-success)',
-    iconColor: 'var(--color-success)',
-    titleColor: 'var(--color-success)',
-  },
-  error: {
-    icon: XCircle,
-    borderColor: 'var(--color-danger)',
-    iconColor: 'var(--color-danger)',
-    titleColor: 'var(--color-danger)',
-  },
-  warning: {
-    icon: AlertCircle,
-    borderColor: 'var(--color-warning)',
-    iconColor: 'var(--color-warning)',
-    titleColor: 'var(--color-warning)',
-  },
-  info: {
-    icon: Info,
-    borderColor: 'var(--color-trust)',
-    iconColor: 'var(--color-trust)',
-    titleColor: 'var(--color-trust)',
-  },
-};
-
-function Toast({ toast }: { toast: ToastItem }) {
-  const { removeToast } = useToastStore();
-  const config = toastConfig[toast.type];
-  const Icon = config.icon;
-
-  return (
-    <div
-      className="ll-card animate-fade-up flex items-start gap-3 p-4 w-80 max-w-full"
-      style={{
-        borderLeft: `3px solid ${config.borderColor}`,
-        boxShadow: 'var(--shadow-dropdown)',
-      }}
-      role="alert"
-      aria-live="polite"
-    >
-      <Icon
-        className="w-5 h-5 shrink-0 mt-0.5"
-        style={{ color: config.iconColor }}
-      />
-      <div className="flex-1 min-w-0">
-        <h4
-          className="font-semibold text-sm"
-          style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-ui)' }}
-        >
-          {toast.title}
-        </h4>
-        <p
-          className="text-xs mt-1 leading-relaxed"
-          style={{ color: 'var(--color-ink-muted)' }}
-        >
-          {toast.message}
-        </p>
-      </div>
-      <button
-        onClick={() => removeToast(toast.id)}
-        className="shrink-0 p-1 rounded transition-colors"
-        style={{ color: 'var(--color-ink-faint)' }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-ink)')}
-        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-ink-faint)')}
-        aria-label="Dismiss notification"
-      >
-        <X className="w-4 h-4" />
-      </button>
-    </div>
-  );
-}
+import React from "react";
+import { useToastStore } from "@/app/state/toastStore";
+import { CheckCircle2, AlertCircle, Info, Loader2, X, ExternalLink } from "lucide-react";
+import { getExplorerUrl } from "@/app/services/formatters";
 
 export function ToastContainer() {
-  const { toasts } = useToastStore();
+  const { toasts, removeToast } = useToastStore();
+
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-5 right-5 z-[100] flex flex-col gap-3 max-h-[80vh] overflow-y-auto pointer-events-auto">
-      {toasts.map((toast) => (
-        <Toast key={toast.id} toast={toast} />
-      ))}
+    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-md w-full px-4 sm:px-0 pointer-events-none">
+      {toasts.map((toast) => {
+        const icons = {
+          success: <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />,
+          error: <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />,
+          warning: <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />,
+          info: <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />,
+          loading: <Loader2 className="w-5 h-5 text-blue-600 animate-spin shrink-0 mt-0.5" />,
+        };
+
+        const bgStyles = {
+          success: "border-emerald-200 bg-white/95 text-slate-900 shadow-emerald-500/5",
+          error: "border-rose-200 bg-white/95 text-slate-900 shadow-rose-500/5",
+          warning: "border-amber-200 bg-white/95 text-slate-900 shadow-amber-500/5",
+          info: "border-blue-200 bg-white/95 text-slate-900 shadow-blue-500/5",
+          loading: "border-blue-200 bg-white/95 text-slate-900 shadow-blue-500/5",
+        };
+
+        return (
+          <div
+            key={toast.id}
+            className={`pointer-events-auto rounded-xl border p-4 shadow-lg backdrop-blur-md transition-all flex items-start gap-3 ${bgStyles[toast.type]}`}
+          >
+            {icons[toast.type]}
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-semibold text-slate-900">{toast.title}</h4>
+              {toast.description && (
+                <p className="text-xs text-slate-600 mt-0.5 leading-relaxed break-words">
+                  {toast.description}
+                </p>
+              )}
+              {toast.txHash && (
+                <a
+                  href={getExplorerUrl(toast.txHash, "tx")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:text-blue-700 mt-1.5 underline underline-offset-2"
+                >
+                  <span>View on StellarExpert</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+            <button
+              onClick={() => removeToast(toast.id)}
+              className="text-slate-400 hover:text-slate-600 transition p-1 rounded-lg hover:bg-slate-100 shrink-0"
+              aria-label="Dismiss notification"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 }
