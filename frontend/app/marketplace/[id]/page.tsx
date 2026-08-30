@@ -21,7 +21,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Sparkles,
-} from "lucide-react";
+} from "@/app/components/ui/Icons";
 
 export default function ListingDetailPage() {
   const params = useParams();

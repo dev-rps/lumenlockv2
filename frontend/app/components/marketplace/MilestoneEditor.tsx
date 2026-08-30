@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Plus, Trash2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, AlertCircle, CheckCircle2 } from "@/app/components/ui/Icons";
 import { Button } from "@/app/components/ui/Button";
 
 export interface MilestoneItem {

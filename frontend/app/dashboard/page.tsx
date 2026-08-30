@@ -21,7 +21,7 @@ import {
   ShoppingBag,
   ExternalLink,
   Lock,
-} from "lucide-react";
+} from "@/app/components/ui/Icons";
 
 export default function DashboardPage() {
   const { isConnected, address, setModalOpen } = useWalletStore();

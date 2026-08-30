@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card } from "@/app/components/ui/Card";
-import { ShieldCheck, BarChart3, TrendingUp, DollarSign, Clock, Layers, Users } from "lucide-react";
+import { ShieldCheck, BarChart3, TrendingUp, DollarSign, Clock, Layers, Users } from "@/app/components/ui/Icons";
 
 export default function AnalyticsPage() {
   const stats = [

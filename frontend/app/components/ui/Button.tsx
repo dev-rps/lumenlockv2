@@ -2,7 +2,7 @@
 
 import React, { forwardRef } from "react";
 import { cn } from "@/app/lib/utils";
-import { Loader2 } from "lucide-react";
+import { Loader2 } from "@/app/components/ui/Icons";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "outline" | "danger" | "ghost" | "amber" | "emerald";

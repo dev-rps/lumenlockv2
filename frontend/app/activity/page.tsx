@@ -15,7 +15,7 @@ import {
   AlertTriangle,
   Clock,
   RefreshCw,
-} from "lucide-react";
+} from "@/app/components/ui/Icons";
 
 export default function ActivityPage() {
   const { data: events, isLoading, refetch, isRefetching } = useContractEvents();

@@ -39,7 +39,7 @@ import {
   Scale,
   DollarSign,
   Info,
-} from "lucide-react";
+} from "@/app/components/ui/Icons";
 
 export default function EscrowRoomPage() {
   const params = useParams();

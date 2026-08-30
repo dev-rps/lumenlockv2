@@ -23,7 +23,7 @@ import {
   ArrowUpRight,
   TrendingUp,
   Zap,
-} from "lucide-react";
+} from "@/app/components/ui/Icons";
 
 export default function HomePage() {
   const { data: listings, isLoading } = useListings();

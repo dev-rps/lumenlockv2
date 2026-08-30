@@ -6,7 +6,7 @@ import { useListings } from "@/app/hooks/useListings";
 import { ListingCard } from "@/app/components/marketplace/ListingCard";
 import { ListingCardSkeleton } from "@/app/components/ui/Skeleton";
 import { Button } from "@/app/components/ui/Button";
-import { Search, SlidersHorizontal, PlusCircle, Layers, Grid, List, Sparkles } from "lucide-react";
+import { Search, SlidersHorizontal, PlusCircle, Layers, Grid, List, Sparkles } from "@/app/components/ui/Icons";
 
 export default function MarketplacePage() {
   const { data: listings, isLoading } = useListings();

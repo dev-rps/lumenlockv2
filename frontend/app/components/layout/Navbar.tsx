@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShieldCheck, PlusCircle, LayoutDashboard, Compass, Activity, Settings, Wallet, ArrowUpRight } from "lucide-react";
+import { ShieldCheck, PlusCircle, LayoutDashboard, Compass, Activity, Settings, Wallet, ArrowUpRight } from "@/app/components/ui/Icons";
 import { useWalletStore } from "@/app/state/walletStore";
 import { truncateAddress } from "@/app/services/formatters";
 import { cn } from "@/app/lib/utils";

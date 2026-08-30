@@ -3,7 +3,7 @@
 import React from "react";
 import { cn } from "@/app/lib/utils";
 import { EscrowState } from "@/app/types";
-import { Check, Clock, AlertTriangle, ShieldCheck, XCircle } from "lucide-react";
+import { Check, Clock, AlertTriangle, ShieldCheck, XCircle } from "@/app/components/ui/Icons";
 
 interface EscrowStateVisualizerProps {
   state: EscrowState;

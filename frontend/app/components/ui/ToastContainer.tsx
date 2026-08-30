@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useToastStore } from "@/app/state/toastStore";
-import { CheckCircle2, AlertCircle, Info, Loader2, X, ExternalLink } from "lucide-react";
+import { CheckCircle2, AlertCircle, Info, Loader2, X, ExternalLink } from "@/app/components/ui/Icons";
 import { getExplorerUrl } from "@/app/services/formatters";
 
 export function ToastContainer() {

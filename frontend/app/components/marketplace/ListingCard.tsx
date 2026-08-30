@@ -6,7 +6,7 @@ import { Listing } from "@/app/types";
 import { Card } from "@/app/components/ui/Card";
 import { Badge, StatusBadge } from "@/app/components/ui/Badge";
 import { truncateAddress } from "@/app/services/formatters";
-import { ShieldCheck, Layers, ArrowUpRight, Star } from "lucide-react";
+import { ShieldCheck, Layers, ArrowUpRight, Star } from "@/app/components/ui/Icons";
 
 interface ListingCardProps {
   listing: Listing;

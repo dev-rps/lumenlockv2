@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { ShieldCheck, ExternalLink, Github, BookOpen } from "lucide-react";
+import { ShieldCheck, ExternalLink, Github, BookOpen } from "@/app/components/ui/Icons";
 import { getExplorerUrl } from "@/app/services/formatters";
 
 export function Footer() {

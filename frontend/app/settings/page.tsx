@@ -16,7 +16,7 @@ import {
   Key,
   CheckCircle2,
   Loader2,
-} from "lucide-react";
+} from "@/app/components/ui/Icons";
 
 export default function SettingsPage() {
   const { isConnected, address, network } = useWalletStore();

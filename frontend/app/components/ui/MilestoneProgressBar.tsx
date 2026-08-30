@@ -2,7 +2,7 @@
 
 import React from "react";
 import { cn } from "@/app/lib/utils";
-import { Check } from "lucide-react";
+import { Check } from "@/app/components/ui/Icons";
 
 interface MilestoneProgressBarProps {
   percentages: number[];

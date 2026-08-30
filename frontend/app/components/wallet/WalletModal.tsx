@@ -5,7 +5,7 @@ import { Modal } from "@/app/components/ui/Modal";
 import { useWalletStore } from "@/app/state/walletStore";
 import { useToastStore } from "@/app/state/toastStore";
 import { truncateAddress, getExplorerUrl } from "@/app/services/formatters";
-import { Wallet, Check, ExternalLink, Copy, LogOut, Droplets, AlertCircle, Loader2 } from "lucide-react";
+import { Wallet, Check, ExternalLink, Copy, LogOut, Droplets, AlertCircle, Loader2 } from "@/app/components/ui/Icons";
 import { Button } from "@/app/components/ui/Button";
 
 export function WalletModal() {

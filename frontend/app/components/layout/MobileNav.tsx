@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, LayoutDashboard, PlusCircle, Activity, Settings } from "lucide-react";
+import { Compass, LayoutDashboard, PlusCircle, Activity, Settings } from "@/app/components/ui/Icons";
 import { cn } from "@/app/lib/utils";
 
 export function MobileNav() {
