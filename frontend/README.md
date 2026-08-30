@@ -1,36 +1,30 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LumenLock v2 — Frontend Web Application
 
-## Getting Started
+> **Production-Grade Decentralized Escrow Marketplace on Stellar Soroban**
 
-First, run the development server:
+## 🌟 Overview
+LumenLock v2 provides a responsive, light-theme interface for trustless peer-to-peer commerce on Stellar's Soroban smart contract framework.
+
+### Features:
+- 🔒 **Bilateral Escrow Releases**: Automatic dual-confirmation release of funds.
+- 📊 **Milestone Tranche Support**: Configurable milestone percentage splits.
+- ⏱️ **Automatic 7-Day Timeout Refund**: Guarantees buyers can claim back funds if seller goes unresponsive.
+- ⚖️ **Dispute Escalation**: Freezes vault funds and alerts designated arbiters.
+- 👛 **Stellar Multi-Wallet Support**: Native Freighter, Albedo, xBull, and LOBSTR / WalletConnect.
+- 📱 **Adaptive Desktop & Mobile UI**: Ergonomic mobile navigation bar and touch-friendly drawers.
+
+## 🚀 Getting Started
 
 ```bash
+# 1. Install dependencies
+npm install
+
+# 2. Run local development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# 3. Run unit test suite
+npm run test
+
+# 4. Build production bundle
+npm run build
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

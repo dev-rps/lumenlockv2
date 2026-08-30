@@ -1,36 +1,27 @@
-import Link from 'next/link';
-import { Home, ArrowLeft } from 'lucide-react';
+"use client";
+
+import React from "react";
+import Link from "next/link";
+import { Button } from "@/app/components/ui/Button";
+import { Compass, ArrowLeft } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="min-h-[70vh] flex items-center justify-center">
-      <div className="text-center flex flex-col items-center" style={{ gap: 'var(--spacing-3)' }}>
-        <div
-          className="type-display-xl"
-          style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-mono)' }}
-        >
-          404
-        </div>
-        <h1 className="type-heading" style={{ color: 'var(--color-ink)' }}>
-          Page not found
-        </h1>
-        <p
-          className="type-body-sm"
-          style={{ color: 'var(--color-ink-muted)', maxWidth: '40ch', textAlign: 'center' }}
-        >
-          The page you&apos;re looking for doesn&apos;t exist or has been moved.
-        </p>
-        <div className="flex items-center gap-3 flex-wrap justify-center">
-          <Link href="/" className="btn-primary" id="not-found-home-btn">
-            <Home style={{ width: 16, height: 16 }} />
-            Home
-          </Link>
-          <Link href="/marketplace" className="btn-secondary" id="not-found-marketplace-btn">
-            <ArrowLeft style={{ width: 16, height: 16 }} />
-            Marketplace
-          </Link>
-        </div>
+    <div className="max-w-md mx-auto px-4 py-24 text-center space-y-5">
+      <div className="w-16 h-16 rounded-3xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto shadow-sm">
+        <Compass className="w-8 h-8" />
       </div>
+      <div className="space-y-2">
+        <h1 className="text-3xl font-extrabold text-slate-900">404 - Page Not Found</h1>
+        <p className="text-xs text-slate-500 leading-relaxed">
+          The escrow room, listing, or protocol route you are looking for does not exist on this network.
+        </p>
+      </div>
+      <Link href="/marketplace">
+        <Button size="lg" leftIcon={<ArrowLeft className="w-4 h-4" />}>
+          Return to Marketplace
+        </Button>
+      </Link>
     </div>
   );
 }
