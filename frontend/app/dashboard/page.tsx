@@ -1,410 +1,330 @@
-'use client';
+"use client";
 
-import { Suspense } from 'react';
-import { useWallet } from '../hooks/useWallet';
-import { useActiveListings } from '../hooks/useListings';
-import { CreateListingFormPanel } from '../components/CreateListingForm';
-import { useSearchParams } from 'next/navigation';
+import React, { useState } from "react";
+import Link from "next/link";
+import { useWalletStore } from "@/app/state/walletStore";
+import { useUserEscrows } from "@/app/hooks/useEscrow";
+import { useListings } from "@/app/hooks/useListings";
+import { STELLAR_CONFIG } from "@/app/services/stellar";
+import { Card } from "@/app/components/ui/Card";
+import { Button } from "@/app/components/ui/Button";
+import { StatusBadge } from "@/app/components/ui/Badge";
+import { truncateAddress, formatDate } from "@/app/services/formatters";
 import {
-  formatAmount,
-  formatAddress,
-  type ListingData,
-} from '../types';
-import {
-  Plus,
-  Package,
-  AlertCircle,
-  CheckCircle2,
-  ArrowUpRight,
-  Wallet,
-  RefreshCcw,
+  ShieldCheck,
   LayoutDashboard,
-} from 'lucide-react';
-import Link from 'next/link';
-import { StatusBadge } from '../components/ui/StatusBadge';
-import { Skeleton } from '../components/ui/Skeleton';
-import { EmptyState } from '../components/ui/EmptyState';
+  Layers,
+  ArrowUpRight,
+  PlusCircle,
+  Coins,
+  Scale,
+  ShoppingBag,
+  ExternalLink,
+  Lock,
+} from "lucide-react";
 
-// ─── Skeleton fallback ────────────────────────────────────────────────────────
-function DashboardSkeleton() {
-  return (
-    <div className="container-wide" style={{ paddingTop: 'var(--spacing-8)', paddingBottom: 'var(--spacing-8)' }}>
-      <div className="flex items-end justify-between" style={{ marginBottom: 'var(--spacing-6)' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <Skeleton height={12} width={80} />
-          <Skeleton height={40} width={200} />
-          <Skeleton height={14} width={150} />
-        </div>
-        <Skeleton height={40} width={140} style={{ borderRadius: 9999 }} />
-      </div>
-      <div className="card-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--spacing-2)', marginBottom: 'var(--spacing-6)' }}>
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="ll-card" style={{ padding: 'var(--spacing-3)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <Skeleton height={10} width={80} />
-            <Skeleton height={32} width={60} />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Wallet Required ──────────────────────────────────────────────────────────
-function WalletRequiredState({ onConnect }: { onConnect: () => void }) {
-  return (
-    <div
-      className="container-wide flex flex-col items-center justify-center text-center"
-      style={{ minHeight: '60vh', gap: 'var(--spacing-3)', paddingTop: 'var(--spacing-8)' }}
-    >
-      <div
-        style={{
-          width: 64,
-          height: 64,
-          borderRadius: '50%',
-          backgroundColor: 'var(--color-trust-soft)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Wallet style={{ width: 28, height: 28, color: 'var(--color-trust)' }} />
-      </div>
-      <h2 className="type-heading" style={{ color: 'var(--color-ink)' }}>
-        Connect Your Wallet
-      </h2>
-      <p className="type-body-sm" style={{ color: 'var(--color-ink-muted)', maxWidth: '40ch' }}>
-        Connect a Stellar wallet to view your listings, escrows, and transaction history.
-      </p>
-      <button
-        onClick={onConnect}
-        className="btn-primary"
-        id="dashboard-connect-wallet-btn"
-      >
-        <Wallet style={{ width: 16, height: 16 }} />
-        Connect Wallet
-      </button>
-    </div>
-  );
-}
-
-// ─── Install Freighter ────────────────────────────────────────────────────────
-function InstallFreighterState() {
-  return (
-    <div
-      className="container-wide flex flex-col items-center justify-center text-center"
-      style={{ minHeight: '60vh', gap: 'var(--spacing-3)', paddingTop: 'var(--spacing-8)' }}
-    >
-      <div
-        style={{
-          width: 64,
-          height: 64,
-          borderRadius: '50%',
-          backgroundColor: 'var(--color-danger-soft)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <AlertCircle style={{ width: 28, height: 28, color: 'var(--color-danger)' }} />
-      </div>
-      <h2 className="type-heading" style={{ color: 'var(--color-ink)' }}>
-        Freighter Extension Required
-      </h2>
-      <p className="type-body-sm" style={{ color: 'var(--color-ink-muted)', maxWidth: '42ch' }}>
-        The Freighter wallet extension was not detected. Please install it to interact with LumenLock&apos;s Soroban contracts.
-      </p>
-      <a
-        href="https://www.freighter.app/"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="btn-primary"
-      >
-        <Wallet style={{ width: 16, height: 16 }} />
-        Install Freighter Wallet
-      </a>
-    </div>
-  );
-}
-
-// ─── Stat Cell ────────────────────────────────────────────────────────────────
-function StatCell({
-  label,
-  value,
-  description,
-  icon: Icon,
-}: {
-  label: string;
-  value: string | number;
-  description?: string;
-  icon?: React.ComponentType<{ style?: React.CSSProperties }>;
-}) {
-  return (
-    <div className="ll-card flex flex-col" style={{ padding: 'var(--spacing-3)' }}>
-      {Icon && (
-        <div
-          className="card-slot-marker"
-          style={{ backgroundColor: 'var(--color-surface-raised)', marginBottom: 'var(--spacing-2)' }}
-        >
-          <Icon style={{ width: 18, height: 18, color: 'var(--color-accent)' }} />
-        </div>
-      )}
-      <span
-        style={{
-          color: 'var(--color-ink)',
-          fontFamily: 'var(--font-mono)',
-          fontSize: '1.75rem',
-          fontWeight: 600,
-          lineHeight: 1.2,
-          marginBottom: 4,
-          display: 'block',
-        }}
-      >
-        {value}
-      </span>
-      <p className="type-caption" style={{ color: 'var(--color-ink-faint)' }}>
-        {label}
-      </p>
-      {description && (
-        <p
-          className="type-body-sm"
-          style={{ color: 'var(--color-ink-faint)', fontSize: '0.75rem', marginTop: 2 }}
-        >
-          {description}
-        </p>
-      )}
-    </div>
-  );
-}
-
-// ─── Listing Row ──────────────────────────────────────────────────────────────
-function MyListingCard({ listing }: { listing: ListingData }) {
-  return (
-    <div className="ll-card ll-card-hover" style={{ padding: 'var(--spacing-2) var(--spacing-3)' }}>
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex-1 min-w-0">
-          <h3
-            className="type-body font-semibold truncate"
-            style={{ color: 'var(--color-ink)', fontFamily: 'var(--font-display)' }}
-          >
-            {listing.title}
-          </h3>
-          <p className="type-body-sm line-clamp-1" style={{ color: 'var(--color-ink-muted)' }}>
-            {listing.description}
-          </p>
-        </div>
-        <span className="type-mono" style={{ color: 'var(--color-ink)', flexShrink: 0 }}>
-          {formatAmount(listing.price)}
-        </span>
-        <StatusBadge status={listing.status} />
-        <Link
-          href={`/marketplace/${listing.listing_id}`}
-          className="flex items-center gap-1 shrink-0"
-          style={{
-            color: 'var(--color-accent)',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            textDecoration: 'none',
-            whiteSpace: 'nowrap',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-accent-bright)')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-accent)')}
-        >
-          View <ArrowUpRight style={{ width: 14, height: 14 }} />
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-// ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  return (
-    <Suspense fallback={<DashboardSkeleton />}>
-      <DashboardContent />
-    </Suspense>
-  );
-}
+  const { isConnected, address, setModalOpen } = useWalletStore();
+  const { data: userEscrows, isLoading } = useUserEscrows(address);
+  const { data: listings } = useListings();
 
-function DashboardContent() {
-  const { address, isConnected, connect, isFreighterInstalled } = useWallet();
-  const { data: allListings, isLoading } = useActiveListings();
-  const searchParams = useSearchParams();
-  const showCreateForm = searchParams.get('action') === 'create';
+  const [activeTab, setActiveTab] = useState<"buyer" | "seller" | "listings" | "disputes">("buyer");
+
+  const myListings = (listings || []).filter((l) => isConnected && l.seller === address);
+  const isArbiter = isConnected && address === STELLAR_CONFIG.arbiterAddress;
+
+  const totalSecuredVolume = (userEscrows?.buyerEscrows || []).reduce(
+    (acc, e) => acc + (parseFloat(e.amount) || 0),
+    0
+  );
+
+  const activeEscrowsCount = (userEscrows?.buyerEscrows || []).filter((e) =>
+    ["Created", "Funded", "PartiallyReleased", "Disputed"].includes(e.state)
+  ).length;
 
   if (!isConnected) {
-    if (isFreighterInstalled === false) {
-      return <InstallFreighterState />;
-    }
-    return <WalletRequiredState onConnect={connect} />;
-  }
-
-  const myListings = allListings?.filter((l) => l.seller === address) ?? [];
-  const activeListings = myListings.filter((l) => l.status === 'Active');
-  const completedListings = myListings.filter((l) => l.status === 'Completed');
-
-  return (
-    <div className="container-wide" style={{ paddingTop: 'var(--spacing-8)', paddingBottom: 'var(--spacing-8)' }}>
-      {/* Header */}
-      <div
-        className="flex flex-col md:flex-row md:items-end justify-between"
-        style={{ gap: 'var(--spacing-3)', marginBottom: 'var(--spacing-6)' }}
-      >
-        <div>
-          <p className="type-caption" style={{ color: 'var(--color-accent)', marginBottom: 'var(--spacing-1)' }}>
-            MY ACCOUNT
-          </p>
-          <h1 className="type-display-lg" style={{ color: 'var(--color-ink)', marginBottom: 'var(--spacing-1)' }}>
-            Dashboard
-          </h1>
-          <p className="type-mono-sm" style={{ color: 'var(--color-ink-faint)' }}>
-            {formatAddress(address!)}
+    return (
+      <div className="max-w-md mx-auto px-4 py-20 text-center space-y-5">
+        <div className="w-16 h-16 rounded-3xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto shadow-sm">
+          <LayoutDashboard className="w-8 h-8" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-xl font-bold text-slate-900">Connect Your Stellar Wallet</h2>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            Connect your Freighter, Albedo, or xBull wallet to view your active escrows, manage listings, and track settlement releases.
           </p>
         </div>
-        <Link
-          href="/marketplace?action=create"
-          className="btn-primary w-fit"
-          id="dashboard-create-listing-btn"
-        >
-          <Plus style={{ width: 16, height: 16 }} />
-          Create Listing
+        <Button size="lg" onClick={() => setModalOpen(true)} leftIcon={<Lock className="w-4 h-4" />}>
+          Connect Stellar Wallet
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900">
+            Escrow Command Center
+          </h1>
+          <p className="text-sm text-slate-500 font-mono mt-1">
+            Connected: {truncateAddress(address, 8, 8)}
+          </p>
+        </div>
+
+        <Link href="/create">
+          <Button leftIcon={<PlusCircle className="w-4 h-4" />}>Create Listing</Button>
         </Link>
       </div>
 
-      {/* Create listing form */}
-      {showCreateForm && (
-        <div style={{ marginBottom: 'var(--spacing-6)' }}>
-          <CreateListingFormPanel />
+      {/* Metrics Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card className="p-5 bg-white border-slate-200">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+            Active Locked Escrows
+          </span>
+          <div className="flex items-baseline gap-2 mt-1.5">
+            <span className="text-2xl md:text-3xl font-extrabold font-mono text-slate-900">
+              {activeEscrowsCount}
+            </span>
+            <span className="text-xs font-semibold text-blue-600">Active Contracts</span>
+          </div>
+        </Card>
+
+        <Card className="p-5 bg-white border-slate-200">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+            Total Secured Volume
+          </span>
+          <div className="flex items-baseline gap-2 mt-1.5">
+            <span className="text-2xl md:text-3xl font-extrabold font-mono text-slate-900">
+              {totalSecuredVolume.toLocaleString()}
+            </span>
+            <span className="text-xs font-semibold text-emerald-600">XLM / USDC</span>
+          </div>
+        </Card>
+
+        <Card className="p-5 bg-white border-slate-200">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+            Published Listings
+          </span>
+          <div className="flex items-baseline gap-2 mt-1.5">
+            <span className="text-2xl md:text-3xl font-extrabold font-mono text-slate-900">
+              {myListings.length}
+            </span>
+            <span className="text-xs font-semibold text-slate-500">In Registry</span>
+          </div>
+        </Card>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex items-center gap-2 border-b border-slate-200 overflow-x-auto pb-1">
+        {[
+          { key: "buyer", label: `Buyer Escrows (${userEscrows?.buyerEscrows.length || 0})` },
+          { key: "seller", label: `Seller Escrows (${userEscrows?.sellerEscrows.length || 0})` },
+          { key: "listings", label: `My Listings (${myListings.length})` },
+          {
+            key: "disputes",
+            label: isArbiter ? "Arbiter Desk ⚖️" : "Disputes & Support",
+          },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key as any)}
+            className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === tab.key
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Contents: Buyer Escrows */}
+      {activeTab === "buyer" && (
+        <div className="space-y-4">
+          {userEscrows?.buyerEscrows && userEscrows.buyerEscrows.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {userEscrows.buyerEscrows.map((escrow) => (
+                <Link
+                  key={escrow.escrowId}
+                  href={`/escrow/${escrow.escrowId}`}
+                  className="block group"
+                >
+                  <Card hoverEffect className="p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-mono font-bold text-slate-500">
+                        Escrow #{escrow.escrowId}
+                      </span>
+                      <StatusBadge status={escrow.state} />
+                    </div>
+
+                    <div className="flex justify-between items-baseline">
+                      <div>
+                        <span className="text-[11px] text-slate-400 block">Seller</span>
+                        <span className="font-mono text-xs font-semibold text-slate-800">
+                          {truncateAddress(escrow.seller, 6, 4)}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-base font-extrabold font-mono text-slate-900">
+                          {escrow.amount} {escrow.assetSymbol}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-blue-600 font-semibold group-hover:text-blue-700">
+                      <span>Open Settlement Room</span>
+                      <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    </div>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center max-w-md mx-auto space-y-4">
+              <ShoppingBag className="w-10 h-10 text-slate-400 mx-auto" />
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-slate-900">No Buyer Escrows Yet</h3>
+                <p className="text-xs text-slate-500">
+                  You haven&apos;t opened any escrow purchases on the marketplace.
+                </p>
+              </div>
+              <Link href="/marketplace">
+                <Button size="sm">Browse Listings</Button>
+              </Link>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Stats Grid */}
-      <div
-        className="card-grid"
-        style={{
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: 'var(--spacing-2)',
-          marginBottom: 'var(--spacing-6)',
-        }}
-      >
-        <StatCell
-          label="Active Listings"
-          value={isLoading ? '—' : activeListings.length}
-          description="Available for purchase"
-          icon={Package}
-        />
-        <StatCell
-          label="Completed Sales"
-          value={isLoading ? '—' : completedListings.length}
-          description="Fully settled"
-          icon={CheckCircle2}
-        />
-        <StatCell
-          label="Open Escrows"
-          value="—"
-          description="As buyer"
-        />
-        <StatCell
-          label="Disputes"
-          value="—"
-          description="Pending resolution"
-        />
-      </div>
-
-      {/* My Listings */}
-      <div style={{ marginBottom: 'var(--spacing-6)' }}>
-        <div className="flex items-center justify-between" style={{ marginBottom: 'var(--spacing-3)' }}>
-          <h2 className="type-heading" style={{ color: 'var(--color-ink)' }}>
-            My Listings
-          </h2>
-          <Link
-            href="/marketplace"
-            className="flex items-center gap-1"
-            style={{ color: 'var(--color-accent)', fontSize: '0.875rem', fontWeight: 500, textDecoration: 'none' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-accent-bright)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-accent)')}
-          >
-            View All <ArrowUpRight style={{ width: 14, height: 14 }} />
-          </Link>
-        </div>
-
-        {isLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="ll-card" style={{ padding: 'var(--spacing-2) var(--spacing-3)' }}>
-                <Skeleton height={16} width="75%" />
+      {/* Tab Contents: Seller Escrows */}
+      {activeTab === "seller" && (
+        <div className="space-y-4">
+          {userEscrows?.sellerEscrows && userEscrows.sellerEscrows.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {userEscrows.sellerEscrows.map((escrow) => (
+                <Link
+                  key={escrow.escrowId}
+                  href={`/escrow/${escrow.escrowId}`}
+                  className="block group"
+                >
+                  <Card hoverEffect className="p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-mono font-bold text-slate-500">
+                        Escrow #{escrow.escrowId}
+                      </span>
+                      <StatusBadge status={escrow.state} />
+                    </div>
+                    <div className="flex justify-between items-baseline">
+                      <div>
+                        <span className="text-[11px] text-slate-400 block">Buyer</span>
+                        <span className="font-mono text-xs font-semibold text-slate-800">
+                          {truncateAddress(escrow.buyer, 6, 4)}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-base font-extrabold font-mono text-slate-900">
+                          {escrow.amount} {escrow.assetSymbol}
+                        </span>
+                      </div>
+                    </div>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center max-w-md mx-auto space-y-4">
+              <Coins className="w-10 h-10 text-slate-400 mx-auto" />
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-slate-900">No Seller Orders</h3>
+                <p className="text-xs text-slate-500">
+                  When buyers initiate an escrow for your listings, they will appear here.
+                </p>
               </div>
-            ))}
-          </div>
-        ) : myListings.length === 0 ? (
-          <EmptyState
-            title="No listings yet"
-            description="You haven't created any listings. Post your first item for sale."
-            action={
-              <Link href="/marketplace?action=create" className="btn-primary">
-                <Plus style={{ width: 16, height: 16 }} />
-                Create Your First Listing
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab Contents: My Listings */}
+      {activeTab === "listings" && (
+        <div className="space-y-4">
+          {myListings.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {myListings.map((listing) => (
+                <Link
+                  key={listing.id}
+                  href={`/marketplace/${listing.id}`}
+                  className="block group"
+                >
+                  <Card hoverEffect className="p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                        {listing.category}
+                      </span>
+                      <StatusBadge status={listing.status} />
+                    </div>
+                    <h4 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition">
+                      {listing.title}
+                    </h4>
+                    <div className="flex justify-between items-baseline pt-2 border-t border-slate-100">
+                      <span className="text-xs text-slate-400">{formatDate(listing.createdAt)}</span>
+                      <span className="font-mono font-bold text-slate-900">
+                        {listing.price} {listing.assetSymbol}
+                      </span>
+                    </div>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center max-w-md mx-auto space-y-4">
+              <PlusCircle className="w-10 h-10 text-slate-400 mx-auto" />
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-slate-900">No Listings Created</h3>
+                <p className="text-xs text-slate-500">
+                  Publish a smart contract listing on the Soroban registry.
+                </p>
+              </div>
+              <Link href="/create">
+                <Button size="sm">Create First Listing</Button>
               </Link>
-            }
-          />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-1)' }}>
-            {myListings.map((listing) => (
-              <MyListingCard key={listing.listing_id.toString()} listing={listing} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Quick Actions */}
-      <div style={{ marginTop: 'var(--spacing-6)' }}>
-        <h2 className="type-heading" style={{ color: 'var(--color-ink)', marginBottom: 'var(--spacing-3)' }}>
-          Quick Actions
-        </h2>
-        <div className="card-grid quick-actions-grid" style={{ gap: 'var(--spacing-2)' }}>
-          {[
-            {
-              href: '/activity',
-              icon: RefreshCcw,
-              label: 'Activity Feed',
-              description: 'Real-time contract events',
-            },
-            {
-              href: '/transactions',
-              icon: ArrowUpRight,
-              label: 'Transactions',
-              description: 'View transaction history',
-            },
-            {
-              href: '/analytics',
-              icon: LayoutDashboard,
-              label: 'Analytics',
-              description: 'Marketplace statistics',
-            },
-          ].map(({ href, icon: Icon, label, description }) => (
-            <Link
-              key={href}
-              href={href}
-              className="ll-card ll-card-trust-hover flex flex-col"
-              style={{ padding: 'var(--spacing-3)', textDecoration: 'none', gap: 'var(--spacing-2)' }}
-            >
-              <div
-                className="card-slot-marker"
-                style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-accent)' }}
-              >
-                <Icon style={{ width: 18, height: 18 }} />
-              </div>
-              <div className="card-slot-title">
-                <h3 className="type-heading" style={{ color: 'var(--color-ink)', fontSize: '1rem' }}>
-                  {label}
-                </h3>
-              </div>
-              <p className="type-body-sm" style={{ color: 'var(--color-ink-muted)' }}>
-                {description}
-              </p>
-            </Link>
-          ))}
+            </div>
+          )}
         </div>
-      </div>
+      )}
+
+      {/* Tab Contents: Disputes / Arbiter Desk */}
+      {activeTab === "disputes" && (
+        <Card className="p-6 md:p-8 space-y-4">
+          <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
+              <Scale className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-900">
+                {isArbiter ? "Designated Arbiter Panel" : "Dispute Escalation Hub"}
+              </h3>
+              <p className="text-xs text-slate-500">
+                Arbiter Address: <code className="font-mono">{truncateAddress(STELLAR_CONFIG.arbiterAddress)}</code>
+              </p>
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-600 leading-relaxed">
+            When disputes are raised, smart contract funds remain in custody lock. The arbiter verifies deliverables, reviews contract events, and invokes <code className="text-blue-700">resolve_dispute()</code>.
+          </p>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 flex items-center justify-between">
+            <span>No pending active disputes under review.</span>
+            <span className="text-emerald-700 font-semibold">All Escrows Healthy</span>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
