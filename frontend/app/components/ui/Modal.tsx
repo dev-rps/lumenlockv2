@@ -55,12 +55,15 @@ export function Modal({
       {/* Modal Dialog */}
       <div
         className={cn(
-          "relative w-full rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 transition-all z-10 overflow-hidden",
+          "relative w-full rounded-2xl bg-white shadow-2xl border border-slate-200 z-10",
+          "flex flex-col",
+          "max-h-[90vh]",
           maxWidthClasses[maxWidth]
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between pb-4">
+        {/* Sticky header */}
+        <div className="flex items-start justify-between px-6 pt-6 pb-4 shrink-0">
           <div>
             {title && (
               <h3 className="text-lg font-bold tracking-tight text-slate-900">
@@ -73,14 +76,15 @@ export function Modal({
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition shrink-0 ml-4"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div>{children}</div>
+        {/* Scrollable body */}
+        <div className="overflow-y-auto px-6 pb-6 flex-1 min-h-0">{children}</div>
       </div>
     </div>
   );

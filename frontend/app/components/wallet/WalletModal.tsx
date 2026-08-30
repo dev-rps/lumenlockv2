@@ -156,7 +156,7 @@ export function WalletModal() {
         setBalances(xlm, usdc);
       } catch { /* account might be unfunded */ }
 
-      setConnected(publicKey, network);
+      setConnected(publicKey, network, walletId);
       setModalOpen(false);
 
       addToast({
@@ -185,7 +185,7 @@ export function WalletModal() {
 
   const handleDemoConnect = () => {
     const demoKey = "GBV2LUMENLOCKBUYERDEMOACCOUNT77777777777777777777777777777";
-    setConnected(demoKey, "TESTNET");
+    setConnected(demoKey, "TESTNET", "demo");
     setBalances("10,000", "500");
     setModalOpen(false);
     addToast({
