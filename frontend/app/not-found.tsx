@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { Button } from "@/app/components/ui/Button";
-import { Compass, ArrowLeft } from "lucide-react";
+import { Compass, ArrowLeft } from "@/app/components/ui/Icons";
 
 export default function NotFound() {
   return (
