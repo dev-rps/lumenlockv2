@@ -1,0 +1,13 @@
+{
+  "name": "lumenlock-root",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix frontend run start"
+  },
+  "dependencies": {
+    "next": "15.1.7"
+  }
+}
