@@ -7,6 +7,7 @@ import { MobileNav } from "./components/layout/MobileNav";
 import { Footer } from "./components/layout/Footer";
 import { ToastContainer } from "./components/ui/ToastContainer";
 import { WalletModal } from "./components/wallet/WalletModal";
+import { StellarWalletKitProvider } from "./providers/StellarWalletKitProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -29,12 +30,14 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body className="font-sans antialiased bg-slate-50 text-slate-900 min-h-screen flex flex-col">
         <QueryClientProvider>
-          <Navbar />
-          <main className="flex-1 w-full pb-20 md:pb-8">{children}</main>
-          <Footer />
-          <MobileNav />
-          <ToastContainer />
-          <WalletModal />
+          <StellarWalletKitProvider>
+            <Navbar />
+            <main className="flex-1 w-full pb-20 md:pb-8">{children}</main>
+            <Footer />
+            <MobileNav />
+            <ToastContainer />
+            <WalletModal />
+          </StellarWalletKitProvider>
         </QueryClientProvider>
       </body>
     </html>

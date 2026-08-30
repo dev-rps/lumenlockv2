@@ -61,3 +61,20 @@ export async function fetchAccountBalances(publicKey: string): Promise<{
     return { xlm: "10,000", usdc: "500" };
   }
 }
+
+/**
+ * Sign a Soroban transaction XDR using the currently-active wallet module in
+ * the Stellar Wallets Kit singleton.
+ */
+export async function signTransactionWithKit(
+  xdr: string,
+  signerAddress: string
+): Promise<string> {
+  const { StellarWalletsKit } = await import("@creit.tech/stellar-wallets-kit");
+  const { signedTxXdr } = await StellarWalletsKit.signTransaction(xdr, {
+    networkPassphrase: STELLAR_CONFIG.networkPassphrase,
+    address: signerAddress,
+  });
+  return signedTxXdr;
+}
+
