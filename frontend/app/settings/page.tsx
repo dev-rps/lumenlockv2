@@ -1,392 +1,211 @@
-'use client';
+"use client";
 
+import React, { useState } from "react";
+import { useWalletStore } from "@/app/state/walletStore";
+import { useToastStore } from "@/app/state/toastStore";
+import { STELLAR_CONFIG } from "@/app/services/stellar";
+import { Card } from "@/app/components/ui/Card";
+import { Button } from "@/app/components/ui/Button";
+import { getExplorerUrl } from "@/app/services/formatters";
 import {
   Settings,
-  Globe,
-  Wallet,
-  Shield,
-  Code2,
+  Droplets,
   ExternalLink,
-  Info,
-  Copy,
-  Check,
-} from 'lucide-react';
-import { useWallet } from '../hooks/useWallet';
-import { formatAddress } from '../types';
-import { getNetworkConfig, getContractIds } from '../services/stellar';
-import { useState } from 'react';
+  ShieldCheck,
+  Server,
+  Key,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
 
-// ─── Section wrapper ──────────────────────────────────────────────────────────
-interface SectionProps {
-  label: string;
-  icon: React.ComponentType<{ style?: React.CSSProperties }>;
-  children: React.ReactNode;
-}
-
-function Section({ label, icon: Icon, children }: SectionProps) {
-  return (
-    <section style={{ marginTop: 'var(--spacing-6)' }}>
-      <div className="flex items-center gap-2" style={{ marginBottom: 'var(--spacing-2)' }}>
-        <Icon style={{ width: 14, height: 14, color: 'var(--color-accent)' }} />
-        <h2 className="type-caption" style={{ color: 'var(--color-ink-faint)' }}>
-          {label}
-        </h2>
-      </div>
-      <div className="ll-card overflow-hidden">{children}</div>
-    </section>
-  );
-}
-
-// ─── Info row ─────────────────────────────────────────────────────────────────
-interface InfoRowProps {
-  label: string;
-  value: string;
-  mono?: boolean;
-  action?: React.ReactNode;
-  last?: boolean;
-}
-
-function InfoRow({ label, value, mono, action, last }: InfoRowProps) {
-  return (
-    <div
-      className="flex items-start justify-between gap-4"
-      style={{
-        padding: 'var(--spacing-2) var(--spacing-3)',
-        borderBottom: last ? 'none' : '1px solid var(--color-border)',
-      }}
-    >
-      <div className="flex-1 min-w-0">
-        <p className="type-caption" style={{ color: 'var(--color-ink-faint)' }}>
-          {label}
-        </p>
-        <p
-          className={mono ? 'type-mono-sm' : 'type-body-sm'}
-          style={{
-            color: 'var(--color-ink)',
-            marginTop: 'var(--spacing-1)',
-            wordBreak: 'break-all',
-          }}
-        >
-          {value}
-        </p>
-      </div>
-      {action && <div className="shrink-0" style={{ marginTop: 'var(--spacing-1)' }}>{action}</div>}
-    </div>
-  );
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function SettingsPage() {
-  const { address, walletId, isConnected, connect, disconnect } = useWallet();
-  const networkConfig = getNetworkConfig();
-  const contractIds = getContractIds();
-  const [copied, setCopied] = useState<string | null>(null);
-  const explorerUrl =
-    process.env.NEXT_PUBLIC_EXPLORER_URL || 'https://stellar.expert/explorer/testnet';
+  const { isConnected, address, network } = useWalletStore();
+  const { addToast } = useToastStore();
+  const [isFunding, setIsFunding] = useState(false);
 
-  const copyText = (key: string, value: string) => {
-    navigator.clipboard.writeText(value);
-    setCopied(key);
-    setTimeout(() => setCopied(null), 2000);
+  const handleFaucet = async () => {
+    if (!address) {
+      addToast({
+        type: "warning",
+        title: "Connect Wallet",
+        description: "Please connect your Stellar account first.",
+      });
+      return;
+    }
+
+    setIsFunding(true);
+    try {
+      const res = await fetch(`https://friendbot.stellar.org?addr=${encodeURIComponent(address)}`);
+      if (res.ok) {
+        addToast({
+          type: "success",
+          title: "Friendbot Funded",
+          description: "10,000 Testnet XLM credited to your account!",
+        });
+      } else {
+        addToast({
+          type: "info",
+          title: "Faucet Status",
+          description: "Account is already funded on Testnet.",
+        });
+      }
+    } catch {
+      addToast({
+        type: "error",
+        title: "Faucet Error",
+        description: "Could not reach friendbot service.",
+      });
+    } finally {
+      setIsFunding(false);
+    }
   };
 
   return (
-    <div className="container-narrow" style={{ paddingTop: 'var(--spacing-8)', paddingBottom: 'var(--spacing-8)' }}>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header */}
-      <div>
-        <p className="type-caption" style={{ color: 'var(--color-accent)', marginBottom: 'var(--spacing-1)' }}>
-          CONFIGURATION
-        </p>
-        <h1
-          className="type-display-lg"
-          style={{ color: 'var(--color-ink)', marginBottom: 'var(--spacing-1)' }}
-        >
-          Settings
+      <div className="pb-4 border-b border-slate-200">
+        <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900">
+          Settings & Network Diagnostics
         </h1>
-        <p className="type-body-sm" style={{ color: 'var(--color-ink-muted)' }}>
-          Manage your wallet, network, and app preferences.
+        <p className="text-sm text-slate-500 mt-1">
+          Verify contract addresses, testnet RPC endpoints, and account test funds.
         </p>
       </div>
 
-      {/* ── Wallet Section ── */}
-      <Section label="Wallet" icon={Wallet}>
-        {isConnected && address ? (
-          <>
-            {/* Connected status row */}
-            <div
-              className="flex items-start justify-between gap-4"
-              style={{
-                padding: 'var(--spacing-2) var(--spacing-3)',
-                borderBottom: '1px solid var(--color-border)',
-              }}
-            >
-              <div className="flex-1 min-w-0">
-                <p className="type-caption" style={{ color: 'var(--color-ink-faint)' }}>
-                  Connected Account
-                </p>
-                <p
-                  className="type-mono-sm"
-                  style={{
-                    color: 'var(--color-ink)',
-                    marginTop: 'var(--spacing-1)',
-                    wordBreak: 'break-all',
-                  }}
-                >
-                  {address}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0" style={{ marginTop: 'var(--spacing-1)' }}>
-                <div
-                  className="rounded-full"
-                  style={{ width: 8, height: 8, backgroundColor: 'var(--color-success)' }}
-                />
-                <span className="type-caption" style={{ color: 'var(--color-success)' }}>
-                  Connected
-                </span>
-              </div>
-            </div>
-
-            {/* Wallet software name */}
-            <InfoRow
-              label="Wallet Extension"
-              value={walletId || 'Unknown'}
-              action={
-                <button
-                  onClick={() => copyText('address', address)}
-                  className="btn-ghost"
-                  style={{ padding: '6px 12px', fontSize: '0.8125rem' }}
-                  aria-label="Copy wallet address"
-                >
-                  {copied === 'address' ? (
-                    <>
-                      <Check style={{ width: 14, height: 14, color: 'var(--color-success)' }} />
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      <Copy style={{ width: 14, height: 14 }} />
-                      Copy Address
-                    </>
-                  )}
-                </button>
-              }
-            />
-
-            {/* Explorer view */}
-            <InfoRow
-              label="View on Explorer"
-              value="Open account in Stellar Expert"
-              action={
-                <a
-                  href={`${explorerUrl}/account/${address}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-sm font-medium transition-colors"
-                  style={{ color: 'var(--color-accent)' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-accent-bright)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-accent)')}
-                >
-                  Open <ExternalLink style={{ width: 14, height: 14 }} />
-                </a>
-              }
-            />
-
-            {/* Disconnect action */}
-            <div
-              style={{
-                padding: 'var(--spacing-2) var(--spacing-3)',
-              }}
-            >
-              <button
-                onClick={disconnect}
-                className="text-sm font-medium transition-colors"
-                style={{
-                  color: 'var(--color-danger)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = '#ff6b6b')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-danger)')}
-                id="settings-disconnect-btn"
-              >
-                Disconnect Wallet
-              </button>
-            </div>
-          </>
-        ) : (
-          <div
-            className="flex flex-col items-center justify-center text-center"
-            style={{
-              padding: 'var(--spacing-3)',
-              gap: 'var(--spacing-3)',
-            }}
-          >
-            <p className="type-body-sm" style={{ color: 'var(--color-ink-muted)' }}>
-              No wallet connected
-            </p>
-            <button
-              onClick={connect}
-              className="btn-secondary"
-              id="settings-connect-wallet-btn"
-            >
-              <Wallet style={{ width: 16, height: 16 }} />
-              Connect Wallet
-            </button>
+      {/* Network Config Card */}
+      <Card className="p-6 md:p-8 space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <Server className="w-5 h-5" />
           </div>
-        )}
-      </Section>
-
-      {/* ── Network Section ── */}
-      <Section label="Network" icon={Globe}>
-        {[
-          { label: 'Network',    value: networkConfig.network },
-          { label: 'RPC Endpoint', value: networkConfig.rpcUrl, mono: true },
-          { label: 'Horizon',    value: networkConfig.horizonUrl, mono: true },
-          {
-            label: 'Passphrase',
-            value: networkConfig.networkPassphrase.slice(0, 40) + '…',
-            mono: true,
-          },
-        ].map(({ label, value, mono }, i, arr) => (
-          <InfoRow
-            key={label}
-            label={label}
-            value={value}
-            mono={mono}
-            last={i === arr.length - 1}
-          />
-        ))}
-      </Section>
-
-      {/* ── Deployed Contracts Section ── */}
-      <Section label="Deployed Contracts" icon={Code2}>
-        {[
-          { label: 'MarketplaceRegistry', id: contractIds.marketplaceRegistry },
-          { label: 'EscrowVault',         id: contractIds.escrowVault },
-        ].map(({ label, id }, i, arr) => (
-          <div
-            key={label}
-            className="flex items-start justify-between gap-4"
-            style={{
-              padding: 'var(--spacing-2) var(--spacing-3)',
-              borderBottom: i < arr.length - 1 ? '1px solid var(--color-border)' : 'none',
-            }}
-          >
-            <div className="flex-1 min-w-0">
-              <p className="type-caption" style={{ color: 'var(--color-ink-faint)' }}>
-                {label}
-              </p>
-              <p
-                className="type-mono-sm"
-                style={{
-                  color: 'var(--color-ink-muted)',
-                  marginTop: 'var(--spacing-1)',
-                  wordBreak: 'break-all',
-                }}
-              >
-                {id || 'Not configured'}
-              </p>
-            </div>
-            {id && (
-              <div className="flex items-center gap-2 shrink-0" style={{ marginTop: 'var(--spacing-1)' }}>
-                <button
-                  onClick={() => copyText(label, id)}
-                  className="p-1 rounded transition-colors"
-                  style={{ color: 'var(--color-ink-faint)', background: 'none', border: 'none', cursor: 'pointer' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-accent)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-ink-faint)')}
-                  aria-label={`Copy ${label} contract ID`}
-                >
-                  {copied === label ? (
-                    <Check style={{ width: 14, height: 14, color: 'var(--color-success)' }} />
-                  ) : (
-                    <Copy style={{ width: 14, height: 14 }} />
-                  )}
-                </button>
-                <a
-                  href={`${explorerUrl}/contract/${id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-1 rounded transition-colors"
-                  style={{ color: 'var(--color-ink-faint)', display: 'flex', alignItems: 'center' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-accent)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-ink-faint)')}
-                  aria-label={`View ${label} on explorer`}
-                >
-                  <ExternalLink style={{ width: 14, height: 14 }} />
-                </a>
-              </div>
-            )}
-          </div>
-        ))}
-      </Section>
-
-      {/* ── Arbiter Settings Section ── */}
-      <Section label="Arbiter Settings" icon={Shield}>
-        <div style={{ padding: 'var(--spacing-2) var(--spacing-3)' }}>
-          <p className="type-caption" style={{ color: 'var(--color-ink-faint)' }}>
-            Designated Arbiter Address
-          </p>
-          <p
-            className="type-mono-sm"
-            style={{
-              color: 'var(--color-ink)',
-              marginTop: 'var(--spacing-1)',
-              wordBreak: 'break-all',
-              marginBottom: 'var(--spacing-3)',
-            }}
-          >
-            {process.env.NEXT_PUBLIC_ARBITER_ADDRESS || 'GBAOLJDF6UDRASQEAY2NEW2D3US3VWZFBJFVIKRWI3KNW6JE35OXCGFC'}
-          </p>
-          <div
-            style={{
-              padding: 'var(--spacing-2)',
-              borderRadius: 'var(--radius-md)',
-              backgroundColor: 'var(--color-warning-soft)',
-              border: '1px solid var(--color-accent-border)',
-            }}
-          >
-            <p className="type-body-sm" style={{ color: 'var(--color-warning)', fontSize: '0.8rem' }}>
-              <strong>Centralization Note:</strong> In this build, a single designated address is
-              pre-seeded as the default Arbiter for dispute resolutions. This is a deliberate
-              centralization tradeoff documented in SECURITY.md. Future releases will implement a
-              decentralized multisig/DAO consensus mechanism.
-            </p>
+          <div>
+            <h3 className="text-base font-bold text-slate-900">Stellar Network Configuration</h3>
+            <p className="text-xs text-slate-500">Connected to official Soroban RPC node.</p>
           </div>
         </div>
-      </Section>
 
-      {/* ── About Section ── */}
-      <Section label="About" icon={Info}>
-        <div style={{ padding: 'var(--spacing-2) var(--spacing-3)' }}>
-          <p className="type-body-sm" style={{ color: 'var(--color-ink-muted)', marginBottom: 'var(--spacing-3)' }}>
-            LumenLock v1.0.0 — Stellar Orange Belt Level Application.
-            Built with Next.js 16, Soroban smart contracts, and StellarWalletsKit.
-          </p>
-          <div className="flex items-center gap-5 flex-wrap">
-            {[
-              { label: 'GitHub', href: 'https://github.com', external: true },
-              { label: 'Architecture', href: '/ARCHITECTURE.md', external: false },
-              { label: 'Security', href: '/SECURITY.md', external: false },
-            ].map(({ label, href, external }) => (
-              <a
-                key={label}
-                href={href}
-                target={external ? '_blank' : undefined}
-                rel={external ? 'noopener noreferrer' : undefined}
-                className="text-sm font-medium flex items-center gap-1 transition-colors"
-                style={{ color: 'var(--color-accent)', textDecoration: 'none' }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-accent-bright)')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-accent)')}
-              >
-                {label}
-                {external && <ExternalLink style={{ width: 14, height: 14 }} />}
-              </a>
-            ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+            <span className="text-slate-400 block">Active Network</span>
+            <span className="font-mono font-bold text-slate-900">{network}</span>
+          </div>
+
+          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+            <span className="text-slate-400 block">Soroban RPC URL</span>
+            <span className="font-mono font-bold text-slate-900 truncate block">
+              {STELLAR_CONFIG.sorobanRpcUrl}
+            </span>
+          </div>
+
+          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+            <span className="text-slate-400 block">Horizon API URL</span>
+            <span className="font-mono font-bold text-slate-900 truncate block">
+              {STELLAR_CONFIG.horizonUrl}
+            </span>
+          </div>
+
+          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+            <span className="text-slate-400 block">Network Passphrase</span>
+            <span className="font-mono font-medium text-slate-700 truncate block">
+              {STELLAR_CONFIG.networkPassphrase}
+            </span>
           </div>
         </div>
-      </Section>
+      </Card>
+
+      {/* Verified Smart Contracts Card */}
+      <Card className="p-6 md:p-8 space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <Key className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-slate-900">Verified Protocol Contracts</h3>
+            <p className="text-xs text-slate-500">Deployed Soroban WASM contracts on Testnet.</p>
+          </div>
+        </div>
+
+        <div className="space-y-3 text-xs">
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <span className="font-bold text-slate-900 block">MarketplaceRegistry Contract</span>
+              <span className="font-mono text-slate-500 break-all">
+                {STELLAR_CONFIG.marketplaceContractId}
+              </span>
+            </div>
+            <a
+              href={getExplorerUrl(STELLAR_CONFIG.marketplaceContractId, "contract")}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-blue-600 hover:underline font-semibold shrink-0"
+            >
+              <span>View Explorer</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <span className="font-bold text-slate-900 block">EscrowVault Custody Contract</span>
+              <span className="font-mono text-slate-500 break-all">
+                {STELLAR_CONFIG.escrowVaultContractId}
+              </span>
+            </div>
+            <a
+              href={getExplorerUrl(STELLAR_CONFIG.escrowVaultContractId, "contract")}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-blue-600 hover:underline font-semibold shrink-0"
+            >
+              <span>View Explorer</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <span className="font-bold text-slate-900 block">Designated Arbiter Account</span>
+              <span className="font-mono text-slate-500 break-all">
+                {STELLAR_CONFIG.arbiterAddress}
+              </span>
+            </div>
+            <a
+              href={getExplorerUrl(STELLAR_CONFIG.arbiterAddress, "account")}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-blue-600 hover:underline font-semibold shrink-0"
+            >
+              <span>View Account</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+        </div>
+      </Card>
+
+      {/* Friendbot Faucet Card */}
+      <Card className="p-6 md:p-8 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <Droplets className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Stellar Friendbot Test Faucet</h3>
+              <p className="text-xs text-slate-500">Fund your connected testnet keypair with 10,000 XLM.</p>
+            </div>
+          </div>
+
+          <Button
+            size="sm"
+            onClick={handleFaucet}
+            isLoading={isFunding}
+            disabled={!isConnected}
+            leftIcon={<Droplets className="w-3.5 h-3.5" />}
+          >
+            Fund 10,000 XLM
+          </Button>
+        </div>
+      </Card>
     </div>
   );
 }

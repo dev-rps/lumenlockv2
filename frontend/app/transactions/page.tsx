@@ -1,271 +1,112 @@
-'use client';
+"use client";
 
-import { useTxStore } from '../state/txStore';
-import type { TxRecord, TxStatus } from '../types';
-import {
-  Clock,
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  ExternalLink,
-  Trash2,
-  Copy,
-  Check,
-  ArrowLeftRight,
-} from 'lucide-react';
-import { useState } from 'react';
-import { StatusBadge } from '../components/ui/StatusBadge';
-import { EmptyState } from '../components/ui/EmptyState';
+import React from "react";
+import { useTxStore } from "@/app/state/txStore";
+import { Card } from "@/app/components/ui/Card";
+import { Button } from "@/app/components/ui/Button";
+import { Badge } from "@/app/components/ui/Badge";
+import { formatDateTime, truncateAddress, getExplorerUrl } from "@/app/services/formatters";
+import { ArrowUpRight, ExternalLink, Trash2, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 
-// ─── Status icons ─────────────────────────────────────────────────────────────
-const statusIcon: Record<TxStatus, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
-  idle:       Clock,
-  pending:    Clock,
-  processing: Loader2,
-  confirmed:  CheckCircle2,
-  failed:     XCircle,
-};
-
-function timeStr(dateVal: Date | string): string {
-  const date = typeof dateVal === 'string' ? new Date(dateVal) : dateVal;
-  return date.toLocaleString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-// ─── Responsive Premium Transaction Card ──────────────────────────────────────
-function TxCard({ tx, onCopy, copied }: {
-  tx: TxRecord;
-  onCopy: (id: string, hash: string) => void;
-  copied: string | null;
-}) {
-  const StatusIcon = statusIcon[tx.status];
-  const isProcessing = tx.status === 'processing';
-
-  return (
-    <div
-      className="ll-card flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all duration-200"
-      style={{
-        padding: 'var(--spacing-3)',
-        background: 'var(--color-surface)',
-        border: '1px solid var(--color-border)',
-        borderRadius: 'var(--radius-md)',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = 'var(--color-accent-border)';
-        e.currentTarget.style.boxShadow = 'var(--shadow-raised)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = 'var(--color-border)';
-        e.currentTarget.style.boxShadow = 'var(--shadow-card)';
-      }}
-    >
-      {/* Left side: Icon + Main Info */}
-      <div className="flex items-start gap-4 flex-1 min-w-0">
-        {/* Status Icon Indicator Container */}
-        <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 'var(--radius-md)',
-            backgroundColor: tx.status === 'confirmed'
-              ? 'var(--color-success-soft)'
-              : tx.status === 'failed'
-              ? 'var(--color-danger-soft)'
-              : 'var(--color-surface-raised)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <StatusIcon
-            className={isProcessing ? 'animate-spin' : ''}
-            style={{
-              width: 18,
-              height: 18,
-              color: tx.status === 'confirmed'
-                ? 'var(--color-success)'
-                : tx.status === 'failed'
-                ? 'var(--color-danger)'
-                : tx.status === 'pending'
-                ? 'var(--color-warning)'
-                : 'var(--color-ink-muted)',
-            }}
-          />
-        </div>
-
-        {/* Content detail */}
-        <div className="min-w-0 flex-1">
-          <h3
-            className="type-body font-semibold truncate"
-            style={{ color: 'var(--color-ink)', fontSize: '0.95rem' }}
-          >
-            {tx.description}
-          </h3>
-          <div className="flex flex-wrap items-center gap-2 mt-1">
-            <span className="type-mono-sm" style={{ color: 'var(--color-ink-faint)' }}>
-              {timeStr(tx.createdAt)}
-            </span>
-            {tx.hash && (
-              <>
-                <span className="type-body-sm" style={{ color: 'var(--color-ink-faint)' }}>•</span>
-                <div className="flex items-center gap-1">
-                  <span className="type-mono-sm" style={{ color: 'var(--color-ink-muted)' }}>
-                    {tx.hash.slice(0, 10)}…{tx.hash.slice(-6)}
-                  </span>
-                  <button
-                    onClick={() => onCopy(tx.id, tx.hash!)}
-                    className="p-1 rounded transition-colors"
-                    style={{ color: 'var(--color-ink-faint)', background: 'none', border: 'none', cursor: 'pointer' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-accent)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-ink-faint)')}
-                    aria-label="Copy transaction hash"
-                  >
-                    {copied === tx.id ? (
-                      <Check style={{ width: 13, height: 13, color: 'var(--color-success)' }} />
-                    ) : (
-                      <Copy style={{ width: 13, height: 13 }} />
-                    )}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-          {tx.error && (
-            <p
-              className="text-xs px-2 py-1 rounded-md"
-              style={{
-                color: 'var(--color-danger)',
-                backgroundColor: 'var(--color-danger-soft)',
-                marginTop: 'var(--spacing-1)',
-                display: 'inline-block',
-              }}
-            >
-              {tx.error}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Right side: Badge + Explorer Action */}
-      <div className="flex items-center gap-3 justify-between md:justify-end border-t md:border-t-0 border-[var(--color-border)] pt-3 md:pt-0 shrink-0">
-        <StatusBadge status={tx.status} />
-        {tx.explorerUrl && (
-          <a
-            href={tx.explorerUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-ghost flex items-center gap-1"
-            style={{ padding: '6px 12px', fontSize: '0.75rem', borderRadius: 'var(--radius-pill)' }}
-          >
-            Explorer
-            <ExternalLink style={{ width: 12, height: 12 }} />
-          </a>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function TransactionsPage() {
-  const { transactions, clearCompleted } = useTxStore();
-  const [copied, setCopied] = useState<string | null>(null);
-
-  const pendingCount = transactions.filter(
-    (t) => t.status === 'pending' || t.status === 'processing',
-  ).length;
-
-  const handleCopy = (id: string, hash: string) => {
-    navigator.clipboard.writeText(hash);
-    setCopied(id);
-    setTimeout(() => setCopied(null), 2000);
-  };
+  const { transactions, clearHistory } = useTxStore();
 
   return (
-    <div className="container-wide" style={{ paddingTop: 'var(--spacing-8)', paddingBottom: 'var(--spacing-8)' }}>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Header */}
-      <div
-        className="flex flex-col md:flex-row md:items-end justify-between"
-        style={{ gap: 'var(--spacing-3)', marginBottom: 'var(--spacing-6)' }}
-      >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <p className="type-caption" style={{ color: 'var(--color-accent)', marginBottom: 'var(--spacing-1)' }}>
-            ON-CHAIN ACTIVITY
-          </p>
-          <h1 className="type-display-lg" style={{ color: 'var(--color-ink)', marginBottom: 'var(--spacing-1)' }}>
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900">
             Transaction Center
           </h1>
-          <p className="type-body-sm" style={{ color: 'var(--color-ink-muted)' }}>
-            {pendingCount > 0 ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="animate-spin" style={{ width: 14, height: 14, color: 'var(--color-accent)' }} />
-                {pendingCount} transaction{pendingCount > 1 ? 's' : ''} in progress
-              </span>
-            ) : (
-              `${transactions.length} transaction${transactions.length !== 1 ? 's' : ''}`
-            )}
+          <p className="text-sm text-slate-500">
+            Audit trail of transactions submitted to the Stellar Soroban network.
           </p>
         </div>
-        <button
-          onClick={clearCompleted}
-          className="btn-ghost w-fit"
-          id="clear-completed-txs-btn"
-        >
-          <Trash2 style={{ width: 15, height: 15 }} />
-          Clear Completed
-        </button>
+
+        {transactions.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={clearHistory}
+            leftIcon={<Trash2 className="w-3.5 h-3.5" />}
+          >
+            Clear History
+          </Button>
+        )}
       </div>
 
-      {/* Content */}
-      {transactions.length === 0 ? (
-        <EmptyState
-          title="No transactions yet"
-          description="Your transaction history will appear here after you interact with the marketplace."
-          icon={
-            <div
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: '50%',
-                backgroundColor: 'var(--color-trust-soft)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <ArrowLeftRight style={{ width: 28, height: 28, color: 'var(--color-trust)' }} />
-            </div>
-          }
-          className="min-h-[400px]"
-        />
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
+      {transactions.length > 0 ? (
+        <div className="space-y-3">
           {transactions.map((tx) => (
-            <TxCard key={tx.id} tx={tx} onCopy={handleCopy} copied={copied} />
+            <Card
+              key={tx.hash}
+              className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-slate-300 transition"
+            >
+              <div className="flex items-start sm:items-center gap-3">
+                <div
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                    tx.status === "success"
+                      ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+                      : tx.status === "failed"
+                      ? "bg-rose-50 text-rose-600 border border-rose-200"
+                      : "bg-blue-50 text-blue-600 border border-blue-200"
+                  }`}
+                >
+                  {tx.status === "success" ? (
+                    <CheckCircle2 className="w-4 h-4" />
+                  ) : tx.status === "failed" ? (
+                    <AlertCircle className="w-4 h-4" />
+                  ) : (
+                    <Clock className="w-4 h-4 animate-spin" />
+                  )}
+                </div>
+
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                      {tx.type.replace(/_/g, " ")}
+                    </span>
+                    <Badge
+                      variant={
+                        tx.status === "success"
+                          ? "completed"
+                          : tx.status === "failed"
+                          ? "disputed"
+                          : "funded"
+                      }
+                      size="sm"
+                    >
+                      {tx.status.toUpperCase()}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-slate-600 font-medium">{tx.description}</p>
+                </div>
+              </div>
+
+              <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
+                <span className="text-[11px] text-slate-400 font-medium">
+                  {formatDateTime(Math.floor(tx.timestamp / 1000))}
+                </span>
+                <a
+                  href={getExplorerUrl(tx.hash, "tx")}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-xs font-mono text-blue-600 hover:text-blue-700 hover:underline mt-0.5"
+                >
+                  <span>{tx.hash.slice(0, 8)}...{tx.hash.slice(-6)}</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            </Card>
           ))}
         </div>
-      )}
-
-      {/* Info note */}
-      {transactions.length > 0 && (
-        <div
-          className="ll-card flex items-start gap-3"
-          style={{
-            padding: 'var(--spacing-2) var(--spacing-3)',
-            marginTop: 'var(--spacing-4)',
-            backgroundColor: 'var(--color-surface-raised)',
-            borderColor: 'var(--color-border-strong)',
-          }}
-        >
-          <Loader2 style={{ width: 15, height: 15, flexShrink: 0, marginTop: 2, color: 'var(--color-accent)' }} />
-          <p className="type-body-sm" style={{ color: 'var(--color-ink-muted)' }}>
-            Transactions are polled every 2 seconds after submission until confirmed or failed.
-            Confirmed transactions include a link to the Stellar Explorer.
+      ) : (
+        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center max-w-md mx-auto space-y-3 shadow-xs">
+          <ArrowUpRight className="w-10 h-10 text-slate-400 mx-auto" />
+          <h3 className="text-sm font-bold text-slate-900">No Transactions Recorded</h3>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            When you sign and submit transactions (e.g. creating listings, funding escrows, or releasing payouts), your transaction receipts will appear here.
           </p>
         </div>
       )}

@@ -1,596 +1,353 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useRef, useEffect, useState } from 'react';
-import { SealIcon } from './components/ui/SealIcon';
+import React, { useState } from "react";
+import Link from "next/link";
+import { useListings } from "@/app/hooks/useListings";
+import { ListingCard } from "@/app/components/marketplace/ListingCard";
+import { ListingCardSkeleton } from "@/app/components/ui/Skeleton";
+import { Button } from "@/app/components/ui/Button";
+import { Card } from "@/app/components/ui/Card";
+import { MilestoneProgressBar } from "@/app/components/ui/MilestoneProgressBar";
+import {
+  ShieldCheck,
+  Compass,
+  PlusCircle,
+  Sparkles,
+  Lock,
+  CheckCircle2,
+  Clock,
+  Scale,
+  ArrowRight,
+  Layers,
+  Coins,
+  ArrowUpRight,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
-const stats = [
-  { label: 'Contract Functions', value: '12+' },
-  { label: 'State Transitions', value: '7' },
-  { label: 'Supported Assets', value: '∞' },
-  { label: 'Audit Tests', value: '15+' },
-];
+export default function HomePage() {
+  const { data: listings, isLoading } = useListings();
 
-const features = [
-  {
-    icon: () => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-        <circle cx="9" cy="12" r="6" />
-        <circle cx="15" cy="12" r="6" />
-      </svg>
-    ),
-    title: 'Bilateral Confirmation',
-    description:
-      'Funds release only when BOTH buyer and seller independently confirm. No single point of trust.',
-  },
-  {
-    icon: () => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="5" y1="4" x2="5" y2="20" />
-        <polyline points="5,4 19,4 15,10 19,16 5,16" />
-      </svg>
-    ),
-    title: 'Milestone Releases',
-    description:
-      'Split payments across project milestones. 30% on start, 70% on delivery — configurable per listing.',
-  },
-  {
-    icon: () => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-        <circle cx="12" cy="12" r="8" />
-        <line x1="12" y1="8" x2="12" y2="12" />
-        <line x1="12" y1="12" x2="15" y2="14" />
-      </svg>
-    ),
-    title: 'Deadline Protection',
-    description:
-      'If the seller goes silent, buyer gets a full refund after the 7-day deadline. No funds locked forever.',
-  },
-  {
-    icon: () => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="12" y1="4" x2="12" y2="20" />
-        <line x1="4" y1="8" x2="20" y2="8" />
-        <path d="M4,8 Q2,12 4,16 Q6,12 4,8" />
-        <path d="M20,8 Q22,12 20,16 Q18,12 20,8" />
-        <line x1="8" y1="20" x2="16" y2="20" />
-      </svg>
-    ),
-    title: 'Dispute Arbitration',
-    description:
-      'Disputes freeze funds and route to a designated arbiter. Resolution credits winner automatically.',
-  },
-  {
-    icon: () => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-        <ellipse cx="12" cy="7" rx="7" ry="2.5" />
-        <path d="M5,7 Q5,11 12,11 Q19,11 19,7" />
-        <path d="M5,11 Q5,15 12,15 Q19,15 19,11" />
-        <path d="M5,15 Q5,19 12,19 Q19,19 19,15" />
-      </svg>
-    ),
-    title: 'Multi-Asset Support',
-    description:
-      'Accept XLM, USDC, or any Stellar Asset Contract token. Any SEP-41 compliant token works.',
-  },
-  {
-    icon: () => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="12,3 21,8.5 12,14 3,8.5 12,3" />
-        <line x1="3" y1="13.5" x2="12" y2="19" />
-        <line x1="21" y1="13.5" x2="12" y2="19" />
-      </svg>
-    ),
-    title: 'Composable Primitives',
-    description:
-      'Built as a reusable Soroban escrow layer. Any marketplace or P2P app on Stellar can build on top.',
-  },
-];
+  // Interactive Escrow Simulator State
+  const [simAmount, setSimAmount] = useState<number>(200);
+  const [simMilestones, setSimMilestones] = useState<number[]>([30, 70]);
+  const [simAsset, setSimAsset] = useState<"XLM" | "USDC">("XLM");
 
-const howItWorks = [
-  {
-    step: '01',
-    title: 'Seller Lists',
-    description: 'Seller creates a listing with price, asset, and optional milestone configuration.',
-    useSeal: false,
-  },
-  {
-    step: '02',
-    title: 'Buyer Opens Escrow',
-    description: 'Buyer opens an escrow, locking the listing. Funds transferred to vault on fund().',
-    useSeal: false,
-  },
-  {
-    step: '03',
-    title: 'Both Confirm',
-    description: 'Buyer receives product/service and confirms. Seller confirms delivery. Funds auto-release.',
-    useSeal: true,
-  },
-  {
-    step: '04',
-    title: 'Settled On-Chain',
-    description: 'Funds go to seller. Listing marked Completed. Full audit trail on Stellar.',
-    useSeal: false,
-  },
-];
-
-// ─── Scroll-reveal hook ────────────────────────────────────────────────────────
-function useScrollReveal(threshold = 0.12) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
-      { threshold },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [threshold]);
-
-  return { ref, visible };
-}
-
-// ─── Feature Card ──────────────────────────────────────────────────────────────
-function FeatureCard({ feature, delay }: { feature: (typeof features)[number]; delay: number }) {
-  const { ref, visible } = useScrollReveal();
-  const Icon = feature.icon;
-  return (
-    <div
-      ref={ref}
-      className={`ll-card flex flex-col gap-4 ${visible ? 'animate-fade-up' : 'opacity-0'}`}
-      style={{
-        padding: 'var(--spacing-3)',
-        animationDelay: `${delay}ms`,
-        animationFillMode: 'both',
-      }}
-    >
-      <div
-        className="card-slot-marker"
-        style={{ backgroundColor: 'var(--color-surface-raised)', color: 'var(--color-accent)' }}
-      >
-        <Icon />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <div className="card-slot-title">
-          <h3 className="type-heading" style={{ color: 'var(--color-ink)' }}>
-            {feature.title}
-          </h3>
-        </div>
-        <p className="type-body-sm" style={{ color: 'var(--color-ink-muted)' }}>
-          {feature.description}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ─── Page ──────────────────────────────────────────────────────────────────────
-export default function LandingPage() {
-  const [heroVisible, setHeroVisible] = useState(false);
-  const hiw = useScrollReveal(0.1);
-
-  useEffect(() => {
-    const t = setTimeout(() => setHeroVisible(true), 80);
-    return () => clearTimeout(t);
-  }, []);
+  const featuredListings = (listings || []).slice(0, 3);
 
   return (
-    <div className="overflow-hidden">
-
-      {/* ── Hero ────────────────────────────────────────────────────────────── */}
-      <section
-        className="relative"
-        style={{
-          backgroundColor: 'var(--color-bg)',
-          paddingTop: 'var(--spacing-12)',
-          paddingBottom: 'var(--spacing-12)',
-        }}
-      >
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px)',
-            backgroundSize: '100% 48px',
-          }}
-          aria-hidden="true"
-        />
-
-        <div className="container-wide relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 items-center" style={{ gap: 'var(--spacing-8)' }}>
-            {/* Left: copy */}
-            <div>
-              <p
-                className={`type-caption transition-all duration-500 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-                style={{ color: 'var(--color-accent)', marginBottom: 'var(--spacing-2)', transitionDelay: '0ms' }}
-              >
-                BUILT ON STELLAR SOROBAN
-              </p>
-
-              <h1
-                className={`type-display-xl transition-all duration-600 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
-                style={{
-                  color: 'var(--color-ink)',
-                  transitionDelay: '80ms',
-                  maxWidth: '16ch',
-                  marginBottom: 'var(--spacing-3)',
-                }}
-              >
-                Trustless Escrow{' '}
-                <em style={{ color: 'var(--color-accent)', fontStyle: 'italic' }}>
-                  for Stellar
-                </em>
-              </h1>
-
-              <p
-                className={`type-body transition-all duration-500 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-                style={{
-                  color: 'var(--color-ink-muted)',
-                  maxWidth: '52ch',
-                  transitionDelay: '160ms',
-                  marginBottom: 'var(--spacing-4)',
-                }}
-              >
-                LumenLock brings bilateral confirmation, milestone-based releases, and
-                dispute arbitration to the Stellar ecosystem — the missing escrow primitive
-                that every P2P marketplace needs.
-              </p>
-
-              <div
-                className={`flex flex-col sm:flex-row gap-3 transition-all duration-500 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-                style={{ transitionDelay: '240ms' }}
-              >
-                <Link
-                  href="/marketplace"
-                  className="btn-primary"
-                  id="explore-marketplace-btn"
-                >
-                  Explore Marketplace →
-                </Link>
-                <Link
-                  href="/dashboard"
-                  className="btn-secondary"
-                  id="open-dashboard-btn"
-                >
-                  Open Dashboard
-                </Link>
-              </div>
+    <div className="space-y-16 md:space-y-24">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden pt-10 md:pt-16 pb-8 md:pb-12 gradient-hero-bg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto space-y-6">
+            {/* Pill Badge */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              <span className="text-xs font-bold text-blue-800">
+                Stellar Soroban Escrow Protocol v2
+              </span>
             </div>
 
-            {/* Right: Seal animation */}
-            <div
-              className={`hidden lg:flex items-center justify-center transition-all duration-700 ${heroVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
-              style={{ transitionDelay: '300ms' }}
-              aria-hidden="true"
-            >
-              <div className="flex flex-col items-center" style={{ gap: 'var(--spacing-3)' }}>
-                <div
-                  className="relative overflow-hidden rounded-full"
-                  style={{ width: 280, height: 280 }}
-                >
-                  <div
-                    className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"
-                    style={{
-                      background: 'radial-gradient(circle, var(--color-accent-soft) 0%, transparent 70%)',
-                      borderRadius: '50%',
-                    }}
-                    aria-hidden="true"
+            {/* Main Headline */}
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
+              Trustless P2P Commerce with{" "}
+              <span className="gradient-brand">Smart Escrow</span> Settlement
+            </h1>
+
+            {/* Subtitle */}
+            <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+              Buy and sell services, code, and digital products without mutual trust. Funds remain securely locked in Soroban smart contracts until bilateral confirmation or milestone completion.
+            </p>
+
+            {/* Primary Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <Link href="/marketplace" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full shadow-lg shadow-blue-500/20" leftIcon={<Compass className="w-4 h-4" />}>
+                  Explore Marketplace
+                </Button>
+              </Link>
+              <Link href="/create" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" className="w-full" leftIcon={<PlusCircle className="w-4 h-4" />}>
+                  Create Escrow Listing
+                </Button>
+              </Link>
+            </div>
+
+            {/* Quick Guarantees */}
+            <div className="pt-6 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500 font-medium">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>Bilateral Dual Confirmation</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-blue-600" />
+                <span>Milestone Tranche Payouts</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-amber-600" />
+                <span>Automatic 7-Day Refund</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Protocol Metrics Bar */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-white rounded-3xl border border-slate-200 shadow-sm">
+          <div className="space-y-1 text-center md:text-left">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+              Total Volume Secured
+            </span>
+            <span className="text-2xl md:text-3xl font-extrabold font-mono text-slate-900">
+              128,500+ XLM
+            </span>
+          </div>
+
+          <div className="space-y-1 text-center md:text-left border-l border-slate-100 pl-4">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+              Escrows Completed
+            </span>
+            <span className="text-2xl md:text-3xl font-extrabold font-mono text-slate-900">
+              340+
+            </span>
+          </div>
+
+          <div className="space-y-1 text-center md:text-left border-l border-slate-100 pl-4">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+              Dispute Rate
+            </span>
+            <span className="text-2xl md:text-3xl font-extrabold font-mono text-emerald-600">
+              &lt; 0.5%
+            </span>
+          </div>
+
+          <div className="space-y-1 text-center md:text-left border-l border-slate-100 pl-4">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+              Network
+            </span>
+            <span className="text-2xl md:text-3xl font-extrabold font-mono text-blue-600">
+              Stellar Soroban
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* Interactive Escrow Simulator */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <Card className="p-6 md:p-10 border-blue-200 bg-gradient-to-br from-white to-blue-50/40 shadow-lg shadow-blue-500/5">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-6 space-y-5">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold">
+                <Zap className="w-3.5 h-3.5" />
+                <span>Interactive Protocol Simulator</span>
+              </div>
+              <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
+                Simulate Your Custom Milestone Escrow Flow
+              </h2>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Test how funds are partitioned into verifiable delivery tranches, locked in the <code className="text-blue-700">EscrowVault</code> contract, and released immediately upon mutual confirmation.
+              </p>
+
+              {/* Slider Controls */}
+              <div className="space-y-4 pt-2">
+                <div>
+                  <div className="flex justify-between text-xs font-bold text-slate-700 mb-2">
+                    <span>Total Agreement Value:</span>
+                    <span className="font-mono text-blue-600 text-sm">
+                      {simAmount} {simAsset}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="50"
+                    max="1000"
+                    step="50"
+                    value={simAmount}
+                    onChange={(e) => setSimAmount(Number(e.target.value))}
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                   />
-                  {heroVisible && (
-                    <div
-                      className="absolute inset-0 flex items-center justify-center"
-                      style={{ zIndex: 1 }}
-                    >
-                      <SealIcon variant="animated" size={200} />
-                    </div>
-                  )}
                 </div>
 
-                <p className="type-caption" style={{ color: 'var(--color-ink-faint)', whiteSpace: 'nowrap' }}>
-                  BOTH PARTIES CONFIRM · FUNDS RELEASE
-                </p>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-bold text-slate-700">Asset:</span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setSimAsset("XLM")}
+                      className={`px-3 py-1 text-xs font-bold rounded-lg border transition ${
+                        simAsset === "XLM" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600"
+                      }`}
+                    >
+                      XLM (Native)
+                    </button>
+                    <button
+                      onClick={() => setSimAsset("USDC")}
+                      className={`px-3 py-1 text-xs font-bold rounded-lg border transition ${
+                        simAsset === "USDC" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600"
+                      }`}
+                    >
+                      USDC
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* ── Stats Strip ──────────────────────────────────────────────────────── */}
-      <section>
-        <div className="gold-line" />
-        <div className="container-wide">
-          <div
-            className="flex flex-col sm:flex-row items-stretch"
-            style={{ padding: 'var(--spacing-4) 0' }}
-          >
-            {stats.map(({ label, value }, i) => (
-              <div
-                key={label}
-                className="stats-strip-cell"
-                style={{
-                  borderRight: i < stats.length - 1 ? '1px solid var(--color-border)' : undefined,
-                }}
-              >
-                <span
-                  style={{
-                    color: 'var(--color-ink)',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 'clamp(1.6rem, 3vw, 2.25rem)',
-                    fontWeight: 600,
-                    lineHeight: 1.2,
-                    marginBottom: '6px',
-                    display: 'block',
-                  }}
-                >
-                  {value}
+            {/* Live Visualization Box */}
+            <div className="lg:col-span-6 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Escrow Tranche Breakdown
                 </span>
-                <span className="type-caption" style={{ color: 'var(--color-ink-faint)' }}>
-                  {label}
+                <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+                  100% Fully Backed
                 </span>
               </div>
-            ))}
-          </div>
-        </div>
-        <div className="gold-line" />
-      </section>
 
-      {/* ── Feature Grid ─────────────────────────────────────────────────────── */}
-      <section
-        style={{ paddingTop: 'var(--spacing-12)', paddingBottom: 'var(--spacing-12)' }}
-        id="features"
-      >
-        <div className="container-wide">
-          <div className="text-center" style={{ marginBottom: 'var(--spacing-6)' }}>
-            <p className="type-caption mb-3" style={{ color: 'var(--color-accent)' }}>
-              WHAT SETS IT APART
-            </p>
-            <h2
-              className="type-display-lg"
-              style={{ color: 'var(--color-ink)', marginBottom: 'var(--spacing-3)' }}
-            >
-              The Escrow Primitive Stellar Was Missing
-            </h2>
-            <p
-              className="type-body"
-              style={{
-                color: 'var(--color-ink-muted)',
-                maxWidth: '60ch',
-                margin: '0 auto',
-                textAlign: 'center',
-              }}
-            >
-              Stellar&apos;s native claimable balances support conditional release — but not bilateral
-              confirmation, dispute freezing, or milestone-based partial releases.
-              LumenLock fills that gap.
-            </p>
-          </div>
+              <MilestoneProgressBar
+                percentages={simMilestones}
+                labels={["Stage 1: Architecture & Design", "Stage 2: Deployment & Release"]}
+                currentIndex={0}
+                totalAmount={simAmount.toString()}
+                assetSymbol={simAsset}
+              />
 
-          <div
-            className="card-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-            style={{ gap: 'var(--spacing-2)' }}
-          >
-            {features.map((feature, i) => (
-              <FeatureCard key={feature.title} feature={feature} delay={i * 60} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── How It Works ─────────────────────────────────────────────────────── */}
-      <section
-        style={{
-          paddingTop: 'var(--spacing-12)',
-          paddingBottom: 'var(--spacing-12)',
-          backgroundColor: 'var(--color-surface)',
-          borderTop: '1px solid var(--color-border)',
-          borderBottom: '1px solid var(--color-border)',
-        }}
-        id="how-it-works"
-      >
-        <div className="container-wide">
-          <div className="text-center" style={{ marginBottom: 'var(--spacing-6)' }}>
-            <p className="type-caption mb-3" style={{ color: 'var(--color-ink-faint)' }}>
-              THE PROCESS
-            </p>
-            <h2
-              className="type-display-lg"
-              style={{ color: 'var(--color-ink)', marginBottom: 'var(--spacing-1)' }}
-            >
-              How It Works
-            </h2>
-            <p className="type-body" style={{ color: 'var(--color-ink-muted)' }}>
-              Four steps from listing to settlement
-            </p>
-          </div>
-
-          {/* Desktop timeline */}
-          <div
-            ref={hiw.ref}
-            className={`hidden lg:flex gap-0 transition-all duration-700 ${hiw.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-            style={{ position: 'relative' }}
-          >
-            <div
-              className="absolute top-[22px] left-[22px] right-[22px] h-[1px] z-0"
-              style={{ background: 'var(--color-border)' }}
-            />
-
-            {howItWorks.map((step) => (
-              <div
-                key={step.step}
-                className="flex flex-col items-center flex-1 min-w-0"
-                style={{ padding: '0 var(--spacing-2)' }}
-              >
-                <div
-                  className="relative z-10 flex items-center justify-center shrink-0"
-                  style={{ marginBottom: 'var(--spacing-3)' }}
-                >
-                  {step.useSeal ? (
-                    <div
-                      className="card-slot-marker"
-                      style={{
-                        backgroundColor: 'var(--color-surface-raised)',
-                        border: '1px solid var(--color-border-strong)',
-                      }}
-                    >
-                      <SealIcon variant="animated" size={32} />
-                    </div>
-                  ) : (
-                    <div
-                      className="card-slot-marker card-slot-marker--circle"
-                      style={{
-                        backgroundColor: 'var(--color-surface-raised)',
-                        border: '1px solid var(--color-border-strong)',
-                        fontFamily: 'var(--font-mono)',
-                        fontWeight: 600,
-                        fontSize: '0.875rem',
-                        color: 'var(--color-accent)',
-                      }}
-                    >
-                      {step.step}
-                    </div>
-                  )}
+              <div className="grid grid-cols-2 gap-3 pt-2 text-xs">
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                  <span className="text-slate-400 block text-[11px]">Tranche 1 Release</span>
+                  <span className="font-bold font-mono text-slate-900">
+                    {((simAmount * 30) / 100).toFixed(0)} {simAsset} (30%)
+                  </span>
                 </div>
-
-                <div className="card-slot-title" style={{ width: '100%', justifyContent: 'center' }}>
-                  <h3
-                    className="type-heading text-center"
-                    style={{ color: 'var(--color-ink)', fontSize: '1.1rem' }}
-                  >
-                    {step.title}
-                  </h3>
-                </div>
-
-                <p className="type-body-sm text-center" style={{ color: 'var(--color-ink-muted)' }}>
-                  {step.description}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* Mobile vertical timeline */}
-          <div className="lg:hidden flex flex-col" style={{ gap: 0 }}>
-            {howItWorks.map((step, i) => (
-              <div key={step.step} className="flex gap-6">
-                <div className="flex flex-col items-center" style={{ flexShrink: 0 }}>
-                  {step.useSeal ? (
-                    <div
-                      className="card-slot-marker"
-                      style={{
-                        backgroundColor: 'var(--color-surface-raised)',
-                        border: '1px solid var(--color-border-strong)',
-                      }}
-                    >
-                      <SealIcon variant="animated" size={32} />
-                    </div>
-                  ) : (
-                    <div
-                      className="card-slot-marker card-slot-marker--circle"
-                      style={{
-                        backgroundColor: 'var(--color-surface-raised)',
-                        border: '1px solid var(--color-border-strong)',
-                        fontFamily: 'var(--font-mono)',
-                        fontWeight: 600,
-                        fontSize: '0.875rem',
-                        color: 'var(--color-accent)',
-                      }}
-                    >
-                      {step.step}
-                    </div>
-                  )}
-                  {i < howItWorks.length - 1 && (
-                    <div
-                      style={{
-                        width: '1px',
-                        flex: 1,
-                        minHeight: '40px',
-                        marginTop: '8px',
-                        marginBottom: '8px',
-                        backgroundColor: 'var(--color-border)',
-                      }}
-                    />
-                  )}
-                </div>
-
-                <div style={{ paddingBottom: 'var(--spacing-4)', paddingTop: '8px', flex: 1, minWidth: 0 }}>
-                  <h3
-                    className="type-heading"
-                    style={{ color: 'var(--color-ink)', fontSize: '1.1rem', marginBottom: 'var(--spacing-1)' }}
-                  >
-                    {step.title}
-                  </h3>
-                  <p className="type-body-sm" style={{ color: 'var(--color-ink-muted)' }}>
-                    {step.description}
-                  </p>
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                  <span className="text-slate-400 block text-[11px]">Tranche 2 Release</span>
+                  <span className="font-bold font-mono text-slate-900">
+                    {((simAmount * 70) / 100).toFixed(0)} {simAsset} (70%)
+                  </span>
                 </div>
               </div>
+
+              <Link href="/create">
+                <Button className="w-full mt-2" rightIcon={<ArrowRight className="w-4 h-4" />}>
+                  Create This Milestone Agreement
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </Card>
+      </section>
+
+      {/* Featured Marketplace Listings */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900">
+              Featured Active Listings
+            </h2>
+            <p className="text-sm text-slate-500">
+              Top escrow-verified services available for immediate engagement.
+            </p>
+          </div>
+          <Link href="/marketplace">
+            <Button variant="outline" size="sm" rightIcon={<ArrowUpRight className="w-4 h-4" />}>
+              View All Listings
+            </Button>
+          </Link>
+        </div>
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <ListingCardSkeleton key={i} />
             ))}
           </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {featuredListings.map((listing) => (
+              <ListingCard key={listing.id} listing={listing} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* How It Works 4-Step Sequence */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="text-center max-w-2xl mx-auto space-y-2">
+          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900">
+            How LumenLock Protects Every Trade
+          </h2>
+          <p className="text-sm text-slate-500">
+            A 4-step bilateral state machine running entirely on Soroban smart contracts.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {[
+            {
+              step: "01",
+              title: "Create or Choose Listing",
+              desc: "Seller publishes a listing with title, deliverables, price in XLM/USDC, and optional milestone tranches.",
+              icon: PlusCircle,
+            },
+            {
+              step: "02",
+              title: "Open & Fund Escrow",
+              desc: "Buyer initiates escrow. Tokens are transferred directly into the EscrowVault smart contract custody.",
+              icon: Lock,
+            },
+            {
+              step: "03",
+              title: "Deliver & Confirm",
+              desc: "Seller delivers work. Both parties confirm satisfaction in the bilateral settlement room.",
+              icon: CheckCircle2,
+            },
+            {
+              step: "04",
+              title: "Auto-Release or Refund",
+              desc: "Vault automatically transfers funds to seller. If deadline expires without confirmation, buyer claims 100% refund.",
+              icon: ShieldCheck,
+            },
+          ].map((item, idx) => {
+            const Icon = item.icon;
+            return (
+              <Card key={idx} className="p-6 space-y-3 relative overflow-hidden bg-white">
+                <span className="text-3xl font-extrabold font-mono text-slate-200 block">
+                  {item.step}
+                </span>
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <Icon className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">{item.title}</h3>
+                <p className="text-xs text-slate-500 leading-relaxed">{item.desc}</p>
+              </Card>
+            );
+          })}
         </div>
       </section>
 
-      {/* ── CTA Band ─────────────────────────────────────────────────────────── */}
-      <section
-        style={{
-          backgroundColor: 'var(--color-surface)',
-          borderTop: '1px solid var(--color-border)',
-          borderBottom: '1px solid var(--color-border)',
-          paddingTop: 'var(--spacing-12)',
-          paddingBottom: 'var(--spacing-12)',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Decorative SealIcon */}
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            right: '-48px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            opacity: 0.06,
-            zIndex: 0,
-          }}
-          aria-hidden="true"
-        >
-          <SealIcon variant="static" size={280} />
-        </div>
-
-        <div className="container-wide" style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ maxWidth: '640px' }}>
-            <p
-              className="type-caption"
-              style={{ color: 'var(--color-accent)', marginBottom: 'var(--spacing-2)' }}
-            >
-              GET STARTED TODAY
-            </p>
-            <h2
-              className="type-display-lg"
-              style={{ color: 'var(--color-ink)', marginBottom: 'var(--spacing-3)' }}
-            >
-              Ready to transact trustlessly?
+      {/* CTA Footer Banner */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        <div className="rounded-3xl bg-slate-900 text-white p-8 md:p-12 text-center space-y-6 shadow-xl">
+          <div className="max-w-2xl mx-auto space-y-3">
+            <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight">
+              Ready to Transact Securely on Stellar?
             </h2>
-            <p
-              className="type-body"
-              style={{
-                color: 'var(--color-ink-muted)',
-                maxWidth: '48ch',
-                marginBottom: 'var(--spacing-4)',
-              }}
-            >
-              Connect your Stellar wallet and start buying or selling on the decentralized marketplace.
-              Every trade is protected by an on-chain escrow vault.
+            <p className="text-slate-400 text-sm md:text-base leading-relaxed">
+              Join developers, designers, and web3 builders using LumenLock for trustless peer-to-peer escrow payments.
             </p>
-            <Link
-              href="/marketplace"
-              className="btn-primary"
-              id="cta-marketplace-btn"
-              style={{ maxWidth: '280px' }}
-            >
-              Get Started →
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link href="/marketplace">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-500 shadow-md">
+                Browse Marketplace
+              </Button>
+            </Link>
+            <Link href="/create">
+              <Button size="lg" variant="outline" className="bg-white/10 text-white border-white/20 hover:bg-white/20">
+                Publish a Listing
+              </Button>
             </Link>
           </div>
         </div>
