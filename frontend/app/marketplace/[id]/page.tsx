@@ -20,7 +20,6 @@ import {
   Lock,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
 } from "@/app/components/ui/Icons";
 
 export default function ListingDetailPage() {

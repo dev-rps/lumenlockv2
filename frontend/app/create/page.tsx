@@ -10,15 +10,13 @@ import { Card } from "@/app/components/ui/Card";
 import { Button } from "@/app/components/ui/Button";
 import { MilestoneEditor, MilestoneItem } from "@/app/components/marketplace/MilestoneEditor";
 import { MilestoneProgressBar } from "@/app/components/ui/MilestoneProgressBar";
+import type { Listing } from "@/app/types";
 import {
   ArrowLeft,
   ArrowRight,
   ShieldCheck,
-  Layers,
   Sparkles,
   CheckCircle2,
-  AlertCircle,
-  Lock,
 } from "@/app/components/ui/Icons";
 
 export default function CreateListingPage() {
@@ -29,7 +27,7 @@ export default function CreateListingPage() {
   // Wizard state
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("Development");
+  const [category, setCategory] = useState<NonNullable<Listing["category"]>>("Development");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("100");
   const [assetSymbol, setAssetSymbol] = useState<"XLM" | "USDC">("XLM");
@@ -172,7 +170,7 @@ export default function CreateListingPage() {
               <label className="text-xs font-bold text-slate-700 block mb-1.5">Category</label>
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e) => setCategory(e.target.value as NonNullable<Listing["category"]>)}
                 className="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900"
               >
                 {categories.map((c) => (

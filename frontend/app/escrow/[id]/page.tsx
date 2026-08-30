@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   useEscrow,
@@ -28,7 +28,6 @@ import {
   getExplorerUrl,
 } from "@/app/services/formatters";
 import {
-  ShieldCheck,
   Clock,
   ExternalLink,
   ArrowLeft,
@@ -37,13 +36,11 @@ import {
   AlertTriangle,
   Coins,
   Scale,
-  DollarSign,
   Info,
 } from "@/app/components/ui/Icons";
 
 export default function EscrowRoomPage() {
   const params = useParams();
-  const router = useRouter();
   const escrowId = params.id as string;
 
   const { data: escrow, isLoading: isEscrowLoading } = useEscrow(escrowId);

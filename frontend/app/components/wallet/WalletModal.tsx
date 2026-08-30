@@ -104,14 +104,19 @@ export function WalletModal() {
 
         // Method B: Direct window.freighter call
         if (!publicKey && typeof window !== "undefined") {
-          const winAny = window as any;
+          const winAny = window as unknown as {
+            freighter?: {
+              requestAccess?: () => Promise<{ publicKey?: string; address?: string } | string>;
+              getPublicKey?: () => Promise<string>;
+            };
+          };
           if (winAny.freighter) {
             try {
               if (typeof winAny.freighter.requestAccess === "function") {
                 const res = await winAny.freighter.requestAccess();
                 if (typeof res === "string" && res.length > 10) publicKey = res;
-                else if (res?.publicKey) publicKey = res.publicKey;
-                else if (res?.address) publicKey = res.address;
+                else if (res && typeof res === "object" && res.publicKey) publicKey = res.publicKey;
+                else if (res && typeof res === "object" && res.address) publicKey = res.address;
               }
               if (!publicKey && typeof winAny.freighter.getPublicKey === "function") {
                 publicKey = await winAny.freighter.getPublicKey();
@@ -136,9 +141,8 @@ export function WalletModal() {
       }
 
       if (!publicKey) {
-        const isFreighterInstalled =
-          typeof window !== "undefined" &&
-          !!((window as any).freighter || (window as any).stellar?.provider === "freighter");
+        const win = typeof window !== "undefined" ? (window as unknown as { freighter?: unknown; stellar?: { provider?: string } }) : {};
+        const isFreighterInstalled = !!(win.freighter || win.stellar?.provider === "freighter");
 
         if (walletId === "freighter" && !isFreighterInstalled) {
           throw new Error(
@@ -164,12 +168,12 @@ export function WalletModal() {
         title: "Wallet Connected",
         description: `Connected: ${truncateAddress(publicKey, 6, 4)}`,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       let msg = "Failed to connect wallet";
       if (typeof err === "string") {
         msg = err;
-      } else if (err && typeof err === "object") {
-        msg = err.message || err.error || String(err);
+      } else if (err && typeof err === "object" && "message" in err && typeof (err as { message: string }).message === "string") {
+        msg = (err as { message: string }).message;
       }
 
       addToast({
@@ -339,6 +343,7 @@ export function WalletModal() {
                     <div className="flex items-center gap-3">
                       {/* Real wallet icon from the kit */}
                       {wallet.icon ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
                         <img
                           src={wallet.icon}
                           alt={wallet.name}

@@ -11,22 +11,19 @@ import { Button } from "@/app/components/ui/Button";
 import { StatusBadge } from "@/app/components/ui/Badge";
 import { truncateAddress, formatDate } from "@/app/services/formatters";
 import {
-  ShieldCheck,
   LayoutDashboard,
-  Layers,
   ArrowUpRight,
   PlusCircle,
   Coins,
   Scale,
   ShoppingBag,
-  ExternalLink,
   Lock,
 } from "@/app/components/ui/Icons";
 import type { EscrowRecord, Listing } from "@/app/types";
 
 export default function DashboardPage() {
   const { isConnected, address, setModalOpen } = useWalletStore();
-  const { data: userEscrows, isLoading } = useUserEscrows(address);
+  const { data: userEscrows } = useUserEscrows(address);
   const { data: listings } = useListings();
 
   const [activeTab, setActiveTab] = useState<"buyer" | "seller" | "listings" | "disputes">("buyer");
@@ -132,7 +129,7 @@ export default function DashboardPage() {
         ].map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key as any)}
+            onClick={() => setActiveTab(tab.key as "buyer" | "seller" | "listings" | "disputes")}
             className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
               activeTab === tab.key
                 ? "border-blue-600 text-blue-600"

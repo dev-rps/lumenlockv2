@@ -12,16 +12,12 @@ import {
   ShieldCheck,
   Compass,
   PlusCircle,
-  Sparkles,
   Lock,
   CheckCircle2,
   Clock,
-  Scale,
   ArrowRight,
   Layers,
-  Coins,
   ArrowUpRight,
-  TrendingUp,
   Zap,
 } from "@/app/components/ui/Icons";
 import type { Listing } from "@/app/types";
@@ -31,7 +27,7 @@ export default function HomePage() {
 
   // Interactive Escrow Simulator State
   const [simAmount, setSimAmount] = useState<number>(200);
-  const [simMilestones, setSimMilestones] = useState<number[]>([30, 70]);
+  const [simMilestones] = useState<number[]>([30, 70]);
   const [simAsset, setSimAsset] = useState<"XLM" | "USDC">("XLM");
 
   const featuredListings = (listings || []).slice(0, 3);

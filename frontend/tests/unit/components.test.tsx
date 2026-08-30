@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import React from "react";
 import { Button } from "@/app/components/ui/Button";
-import { Badge, StatusBadge } from "@/app/components/ui/Badge";
+import { StatusBadge } from "@/app/components/ui/Badge";
 import { MilestoneProgressBar } from "@/app/components/ui/MilestoneProgressBar";
 import { EscrowStateVisualizer } from "@/app/components/ui/EscrowStateVisualizer";
 

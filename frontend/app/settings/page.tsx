@@ -8,14 +8,10 @@ import { Card } from "@/app/components/ui/Card";
 import { Button } from "@/app/components/ui/Button";
 import { getExplorerUrl } from "@/app/services/formatters";
 import {
-  Settings,
   Droplets,
   ExternalLink,
-  ShieldCheck,
   Server,
   Key,
-  CheckCircle2,
-  Loader2,
 } from "@/app/components/ui/Icons";
 
 export default function SettingsPage() {

@@ -63,12 +63,13 @@ export function useOpenEscrow() {
         });
 
         return { escrowId, txHash };
-      } catch (err: any) {
+      } catch (err: unknown) {
         removeToast(toastId);
+        const errorMsg = err instanceof Error ? err.message : "Transaction failed";
         addToast({
           type: "error",
           title: "Failed to Open Escrow",
-          description: err.message || "Transaction failed",
+          description: errorMsg,
         });
         throw err;
       }
@@ -121,12 +122,13 @@ export function useFundEscrow() {
         });
 
         return { txHash };
-      } catch (err: any) {
+      } catch (err: unknown) {
         removeToast(toastId);
+        const errorMsg = err instanceof Error ? err.message : "Transaction failed";
         addToast({
           type: "error",
           title: "Failed to Fund Escrow",
-          description: err.message || "Transaction failed",
+          description: errorMsg,
         });
         throw err;
       }

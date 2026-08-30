@@ -16,7 +16,7 @@ describe("Formatting & Helper Utilities", () => {
   });
 
   it("converts human readable amount to stroops", () => {
-    expect(toStroops("1")).toBe(10000000n);
+    expect(toStroops("1")).toBe(STROOPS_PER_XLM);
     expect(toStroops("150")).toBe(1500000000n);
     expect(toStroops("1.25")).toBe(12500000n);
   });

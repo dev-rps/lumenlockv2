@@ -77,6 +77,7 @@ export function StellarWalletKitProvider({ children }: { children: React.ReactNo
     return () => {
       cleanups.forEach((fn) => fn());
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <>{children}</>;

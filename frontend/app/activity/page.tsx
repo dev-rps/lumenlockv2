@@ -7,13 +7,10 @@ import { Badge } from "@/app/components/ui/Badge";
 import { formatDateTime, truncateAddress, getExplorerUrl } from "@/app/services/formatters";
 import {
   Activity,
-  Sparkles,
   ExternalLink,
-  ShieldCheck,
   Coins,
   CheckCircle2,
   AlertTriangle,
-  Clock,
   RefreshCw,
 } from "@/app/components/ui/Icons";
 import type { ContractEvent } from "@/app/types";
@@ -139,15 +136,15 @@ export default function ActivityPage() {
                   </div>
 
                   <p className="text-xs font-medium text-slate-700">
-                    {evt.data.amount && (
+                    {typeof evt.data.amount === "string" && (
                       <span className="font-bold font-mono text-slate-900 mr-1.5">
                         {evt.data.amount}
                       </span>
                     )}
-                    {evt.data.seller && (
+                    {typeof evt.data.seller === "string" && (
                       <span>Seller: {truncateAddress(evt.data.seller)} </span>
                     )}
-                    {evt.data.buyer && (
+                    {typeof evt.data.buyer === "string" && (
                       <span>Buyer: {truncateAddress(evt.data.buyer)}</span>
                     )}
                   </p>

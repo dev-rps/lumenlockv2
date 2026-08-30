@@ -42,7 +42,7 @@ export function MilestoneEditor({
     onChange(milestones.filter((_, i) => i !== index));
   };
 
-  const handleUpdate = (index: number, field: "percentage" | "label", value: any) => {
+  const handleUpdate = (index: number, field: "percentage" | "label", value: string | number) => {
     const updated = [...milestones];
     updated[index] = { ...updated[index], [field]: value };
     onChange(updated);

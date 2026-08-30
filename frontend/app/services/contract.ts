@@ -4,10 +4,9 @@
 
 import { Listing, EscrowRecord, MilestoneConfig } from "@/app/types";
 import { STELLAR_CONFIG } from "./stellar";
-import { formatStroops } from "./formatters";
 
 // In-memory mock store for instant high-fidelity local interactive testing & sandbox resilience
-let mockListings: Listing[] = [
+const mockListings: Listing[] = [
   {
     id: "1",
     seller: "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ",
@@ -83,7 +82,7 @@ let mockListings: Listing[] = [
   },
 ];
 
-let mockEscrows: EscrowRecord[] = [
+const mockEscrows: EscrowRecord[] = [
   {
     escrowId: "1",
     listingId: "1",
@@ -133,7 +132,7 @@ export const ContractService = {
     price: string;
     asset: string;
     assetSymbol: "XLM" | "USDC";
-    category: any;
+    category?: Listing["category"];
     milestoneConfig?: MilestoneConfig | null;
   }): Promise<{ listingId: string; txHash: string }> {
     const rawPrice = BigInt(Math.round(parseFloat(params.price) * 10000000));
@@ -297,7 +296,8 @@ export const ContractService = {
   /**
    * Raise dispute to freeze funds.
    */
-  async raiseDispute(escrowId: string, raiser: string): Promise<{ txHash: string }> {
+  async raiseDispute(escrowId: string, _raiser?: string): Promise<{ txHash: string }> {
+    void _raiser;
     const escrow = mockEscrows.find((e) => e.escrowId === escrowId);
     if (!escrow) throw new Error("Escrow not found");
 

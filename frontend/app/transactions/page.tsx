@@ -5,7 +5,7 @@ import { useTxStore } from "@/app/state/txStore";
 import { Card } from "@/app/components/ui/Card";
 import { Button } from "@/app/components/ui/Button";
 import { Badge } from "@/app/components/ui/Badge";
-import { formatDateTime, truncateAddress, getExplorerUrl } from "@/app/services/formatters";
+import { formatDateTime, getExplorerUrl } from "@/app/services/formatters";
 import { ArrowUpRight, ExternalLink, Trash2, CheckCircle2, AlertCircle, Clock } from "@/app/components/ui/Icons";
 
 export default function TransactionsPage() {

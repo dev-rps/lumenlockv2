@@ -6,6 +6,7 @@ import { EventService } from "@/app/services/events";
 import { useToastStore } from "@/app/state/toastStore";
 import { useTxStore } from "@/app/state/txStore";
 import { STELLAR_CONFIG } from "@/app/services/stellar";
+import { Listing, MilestoneConfig } from "@/app/types";
 
 export function useListings() {
   return useQuery({
@@ -35,8 +36,8 @@ export function useCreateListing() {
       price: string;
       asset: string;
       assetSymbol: "XLM" | "USDC";
-      category: any;
-      milestoneConfig?: any;
+      category?: Listing["category"];
+      milestoneConfig?: MilestoneConfig | null;
     }) => {
       const toastId = addToast({
         type: "loading",
@@ -75,12 +76,13 @@ export function useCreateListing() {
         });
 
         return { listingId, txHash };
-      } catch (err: any) {
+      } catch (err: unknown) {
         removeToast(toastId);
+        const errorMsg = err instanceof Error ? err.message : "Soroban RPC call failed";
         addToast({
           type: "error",
           title: "Failed to Create Listing",
-          description: err.message || "Soroban RPC call failed",
+          description: errorMsg,
         });
         throw err;
       }

@@ -6,16 +6,18 @@ import { fetchAccountBalances } from "@/app/services/stellar";
 
 export function useWallet() {
   const store = useWalletStore();
+  const address = store.address;
+  const setBalances = store.setBalances;
 
   const refreshBalances = useCallback(async () => {
-    if (!store.address) return;
+    if (!address) return;
     try {
-      const { xlm, usdc } = await fetchAccountBalances(store.address);
-      store.setBalances(xlm, usdc);
+      const { xlm, usdc } = await fetchAccountBalances(address);
+      setBalances(xlm, usdc);
     } catch {
       // ignore
     }
-  }, [store.address]);
+  }, [address, setBalances]);
 
   useEffect(() => {
     if (store.isConnected && store.address) {

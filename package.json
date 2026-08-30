@@ -6,9 +6,11 @@
     "frontend"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=frontend",
-    "build": "npm run build --workspace=frontend",
-    "start": "npm run start --workspace=frontend"
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix frontend run start",
+    "test": "npm --prefix frontend test",
+    "lint": "cd frontend && npm run lint"
   },
   "dependencies": {
     "@creit.tech/stellar-wallets-kit": "^2.4.0",
@@ -17,7 +19,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.4.7",
     "lucide-react": "^0.475.0",
-    "next": "^15.2.0",
+    "next": "^16.3.3",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "tailwind-merge": "^3.0.1",

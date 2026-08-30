@@ -5,7 +5,7 @@
 import { ContractEvent } from "@/app/types";
 import { STELLAR_CONFIG } from "./stellar";
 
-let mockEvents: ContractEvent[] = [
+const mockEvents: ContractEvent[] = [
   {
     id: "evt-1",
     ledger: 1048201,

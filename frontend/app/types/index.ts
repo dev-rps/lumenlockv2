@@ -73,7 +73,7 @@ export interface ContractEvent {
     | 'refund_claimed'
     | 'dispute_raised'
     | 'dispute_resolved';
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   txHash?: string;
 }
 

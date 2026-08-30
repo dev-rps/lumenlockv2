@@ -6,7 +6,7 @@ import { useListings } from "@/app/hooks/useListings";
 import { ListingCard } from "@/app/components/marketplace/ListingCard";
 import { ListingCardSkeleton } from "@/app/components/ui/Skeleton";
 import { Button } from "@/app/components/ui/Button";
-import { Search, SlidersHorizontal, PlusCircle, Layers, Grid, List, Sparkles } from "@/app/components/ui/Icons";
+import { Search, PlusCircle, Layers, Sparkles } from "@/app/components/ui/Icons";
 import type { Listing } from "@/app/types";
 
 export default function MarketplacePage() {
@@ -17,7 +17,6 @@ export default function MarketplacePage() {
   const [selectedAsset, setSelectedAsset] = useState<string>("All");
   const [milestoneOnly, setMilestoneOnly] = useState(false);
   const [sortBy, setSortBy] = useState<"newest" | "price-asc" | "price-desc">("newest");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const categories = ["All", "Development", "Design", "Consulting", "Marketing", "Digital Asset"];
 
@@ -104,7 +103,7 @@ export default function MarketplacePage() {
           {/* Sort By */}
           <select
             value={sortBy}
-            onChange={(e: any) => setSortBy(e.target.value)}
+            onChange={(e) => setSortBy(e.target.value as "newest" | "price-asc" | "price-desc")}
             className="px-3 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:ring-2 focus:ring-blue-500/20"
           >
             <option value="newest">Newest First</option>
