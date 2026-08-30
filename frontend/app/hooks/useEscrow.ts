@@ -25,41 +25,53 @@ export function useUserEscrows(address: string | null) {
 
 export function useOpenEscrow() {
   const queryClient = useQueryClient();
-  const { addToast } = useToastStore();
+  const { addToast, removeToast } = useToastStore();
   const { addTx } = useTxStore();
 
   return useMutation({
     mutationFn: async (params: { listingId: string; buyer: string }) => {
-      addToast({
+      const toastId = addToast({
         type: "loading",
         title: "Opening Escrow",
         description: "Invoking open_escrow() and locking listing...",
       });
 
-      const { escrowId, txHash } = await ContractService.openEscrow(params);
+      try {
+        const { escrowId, txHash } = await ContractService.openEscrow(params);
 
-      addTx({
-        hash: txHash,
-        type: "open_escrow",
-        description: `Opened Escrow #${escrowId} for Listing #${params.listingId}`,
-        status: "success",
-      });
+        removeToast(toastId);
 
-      EventService.pushEvent({
-        contractId: STELLAR_CONFIG.escrowVaultContractId,
-        type: "escrow_opened",
-        data: { escrowId, listingId: params.listingId, buyer: params.buyer },
-        txHash,
-      });
+        addTx({
+          hash: txHash,
+          type: "open_escrow",
+          description: `Opened Escrow #${escrowId} for Listing #${params.listingId}`,
+          status: "success",
+        });
 
-      addToast({
-        type: "success",
-        title: "Escrow Opened!",
-        description: `Escrow #${escrowId} is ready to be funded.`,
-        txHash,
-      });
+        EventService.pushEvent({
+          contractId: STELLAR_CONFIG.escrowVaultContractId,
+          type: "escrow_opened",
+          data: { escrowId, listingId: params.listingId, buyer: params.buyer },
+          txHash,
+        });
 
-      return { escrowId, txHash };
+        addToast({
+          type: "success",
+          title: "Escrow Opened!",
+          description: `Escrow #${escrowId} is ready to be funded.`,
+          txHash,
+        });
+
+        return { escrowId, txHash };
+      } catch (err: any) {
+        removeToast(toastId);
+        addToast({
+          type: "error",
+          title: "Failed to Open Escrow",
+          description: err.message || "Transaction failed",
+        });
+        throw err;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["listings"] });
@@ -71,41 +83,53 @@ export function useOpenEscrow() {
 
 export function useFundEscrow() {
   const queryClient = useQueryClient();
-  const { addToast } = useToastStore();
+  const { addToast, removeToast } = useToastStore();
   const { addTx } = useTxStore();
 
   return useMutation({
     mutationFn: async (escrowId: string) => {
-      addToast({
+      const toastId = addToast({
         type: "loading",
         title: "Funding Escrow",
         description: "Transferring tokens into EscrowVault smart contract custody...",
       });
 
-      const { txHash } = await ContractService.fundEscrow(escrowId);
+      try {
+        const { txHash } = await ContractService.fundEscrow(escrowId);
 
-      addTx({
-        hash: txHash,
-        type: "fund",
-        description: `Funded Escrow #${escrowId}`,
-        status: "success",
-      });
+        removeToast(toastId);
 
-      EventService.pushEvent({
-        contractId: STELLAR_CONFIG.escrowVaultContractId,
-        type: "escrow_funded",
-        data: { escrowId },
-        txHash,
-      });
+        addTx({
+          hash: txHash,
+          type: "fund",
+          description: `Funded Escrow #${escrowId}`,
+          status: "success",
+        });
 
-      addToast({
-        type: "success",
-        title: "Escrow Funded!",
-        description: `Funds safely locked in vault contract. Dual confirmation enabled.`,
-        txHash,
-      });
+        EventService.pushEvent({
+          contractId: STELLAR_CONFIG.escrowVaultContractId,
+          type: "escrow_funded",
+          data: { escrowId },
+          txHash,
+        });
 
-      return { txHash };
+        addToast({
+          type: "success",
+          title: "Escrow Funded!",
+          description: `Funds safely locked in vault contract. Dual confirmation enabled.`,
+          txHash,
+        });
+
+        return { txHash };
+      } catch (err: any) {
+        removeToast(toastId);
+        addToast({
+          type: "error",
+          title: "Failed to Fund Escrow",
+          description: err.message || "Transaction failed",
+        });
+        throw err;
+      }
     },
     onSuccess: (_, escrowId) => {
       queryClient.invalidateQueries({ queryKey: ["escrow", escrowId] });

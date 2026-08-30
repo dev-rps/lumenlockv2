@@ -24,8 +24,8 @@ export function useListing(id: string) {
 
 export function useCreateListing() {
   const queryClient = useQueryClient();
-  const { addToast } = useToastStore();
-  const { addTx, updateTxStatus } = useTxStore();
+  const { addToast, removeToast } = useToastStore();
+  const { addTx } = useTxStore();
 
   return useMutation({
     mutationFn: async (params: {
@@ -46,6 +46,8 @@ export function useCreateListing() {
 
       try {
         const { listingId, txHash } = await ContractService.createListing(params);
+
+        removeToast(toastId);
 
         addTx({
           hash: txHash,
@@ -68,12 +70,13 @@ export function useCreateListing() {
         addToast({
           type: "success",
           title: "Listing Created Successfully!",
-          description: `Listing #${listingId} is now active on the marketplace.`,
+          description: `Listing #${listingId} is active on the marketplace.`,
           txHash,
         });
 
         return { listingId, txHash };
       } catch (err: any) {
+        removeToast(toastId);
         addToast({
           type: "error",
           title: "Failed to Create Listing",
