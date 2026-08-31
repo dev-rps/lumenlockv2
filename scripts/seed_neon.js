@@ -13,7 +13,7 @@ const fs = require("fs");
 
 const CONNECTION_STRING =
   process.env.DATABASE_URL ||
-  "postgresql://neondb_owner:npg_5pVoARJvdt2b@ep-aged-wildflower-azcaggty-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
+  "postgresql://neondb_owner:npg_****************@ep-aged-wildflower-azcaggty-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
 
 async function main() {
   console.log("\n🚀 Initializing Neon PostgreSQL Database Migration & Seeding...\n");

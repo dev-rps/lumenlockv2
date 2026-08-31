@@ -9,7 +9,7 @@ import { Pool } from "@neondatabase/serverless";
 
 const connectionString =
   process.env.DATABASE_URL ||
-  "postgresql://neondb_owner:npg_5pVoARJvdt2b@ep-aged-wildflower-azcaggty-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
+  "postgresql://neondb_owner:npg_****************@ep-aged-wildflower-azcaggty-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
 
 // Global singleton pool to prevent connection exhaustion in serverless Next.js route handlers
 const globalForDb = globalThis as unknown as {

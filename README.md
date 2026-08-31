@@ -118,7 +118,7 @@ LumenLock features a production-ready authentication and database backend system
 **Required Environment Variables (set in Vercel / local `.env.local`)**:
 ```env
 JWT_SECRET=your_32_char_random_secret_here
-DATABASE_URL=postgresql://neondb_owner:npg_5pVoARJvdt2b@ep-aged-wildflower-azcaggty-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+DATABASE_URL=postgresql://neondb_owner:npg_****************@ep-aged-wildflower-azcaggty-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
 ```
 
 
