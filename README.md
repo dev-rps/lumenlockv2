@@ -94,6 +94,7 @@ LumenLock has onboarded **15 active beta users** on the Stellar testnet. Each re
 
 ### 📊 Feedback Dataset & Neon PostgreSQL Backend
 
+- 📥 **Latest CSV Dataset File**: [user_feedback_dataset.csv](https://github.com/user-attachments/files/31657733/user_feedback_dataset.2.csv) — direct download link for the latest beta user feedback dataset
 - **Live Dynamic CSV Export**: [`/api/feedback/export`](https://lumenlock.vercel.app/api/feedback/export) — dynamically exports all feedback entries directly from Neon PostgreSQL cloud database (sorted with **newest entries on top**)
 - **Live Feedback Form**: [`/feedback`](https://lumenlock.vercel.app/feedback) — interactive feedback form saving submissions to Neon PostgreSQL
 - **API Endpoint**: `GET /api/feedback` — returns all feedback submissions and live average ratings from Neon PostgreSQL
