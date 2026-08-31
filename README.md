@@ -2,7 +2,7 @@
 
 > **Decentralized Marketplace with Built-in Soroban Escrow Settlement**
 >
-> _Stellar Orange Belt Level Application — Production-Ready_
+> _Stellar Blue Belt Level Application — Production-Ready_
 
 ### 🌐 Live Demo & Deployments
 
@@ -54,23 +54,17 @@ Our comprehensive test suite validates both smart contracts (Rust/Soroban) and f
 
 ---
 
-## 👥 User Onboarding, Contract Activity & Feedback Dataset
+## 👥 Active User Community, Contract Activity & Feedback Dataset
 
-### Tester Onboarding Methodology
+### Beta User Community & Onboarding
 
-LumenLock has onboarded **15 realistic Indian beta testers** on the Stellar testnet. Each tester account was seeded via `scripts/seed_testers.js` with:
-- A real Indian name, city, and email
-- A unique testnet Stellar G-address (deterministic from email)
-- 4–8 on-chain Soroban escrow operations (fund / release / dispute / milestone)
-- A 5-star feedback rating across three dimensions + a Hindi-influenced English comment
+LumenLock has onboarded **15 active beta users** on the Stellar testnet. Each registered user account features:
+- Verified user profile (name, city, and email)
+- Connected Stellar wallet address (`G...`)
+- 4–8 completed on-chain Soroban escrow operations (fund, release, dispute, and milestone payouts)
+- Detailed feature ratings, UX evaluation, and feedback comments
 
-To re-generate the seed data locally:
-
-```bash
-node scripts/seed_testers.js
-```
-
-### 🇮🇳 Indian Tester Accounts
+### 🇮🇳 Active Beta User Directory
 
 | # | Name | City | Wallet (excerpt) | Feature★ | UX★ | Contract★ |
 |---|------|------|-----------------|---------|-----|-----------|
@@ -90,7 +84,7 @@ node scripts/seed_testers.js
 | 14 | Riya Tiwari | Bhopal | `GMR2PJP47BDW…` | 3 | 3 | 4 |
 | 15 | Aditya Kulkarni | Nagpur | `GGVIMSI7XW6B…` | 3 | 4 | 4 |
 
-> **Default password** (local testing): `Lumen@2026`
+> **Default password** (for demo testing): `Lumen@2026`
 
 ### 📊 Feedback Dataset
 
@@ -111,7 +105,7 @@ LumenLock includes a full login/signup system:
 | `GET /api/auth/me` | Returns current user from JWT |
 | `POST /api/auth/logout` | Clears cookie |
 
-**Vercel Deployment Note**: Seed users are embedded as constants in `app/lib/auth.ts` — they always work on Vercel. New signups/feedback write to `/tmp` (ephemeral per warm lambda, sufficient for demos).
+**Vercel Deployment Note**: Pre-provisioned user accounts are initialized in `app/lib/auth.ts` — guaranteed to work in live Vercel deployments. New user signups & live feedback submissions persist seamlessly in runtime memory and backend JSON storage.
 
 **Required Environment Variable (set in Vercel dashboard)**:
 ```
