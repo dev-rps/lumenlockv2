@@ -6,7 +6,8 @@
 
 ### 🌐 Live Demo & Deployments
 
-- 🖥️ **Production Web App**: [https://lumenlock.vercel.app](https://lumenlock.vercel.app)
+- 🖥️ **Production Web App**: [https://lumenlock.vercel.app](https://lumenlock.vercel.app) | [https://lumenlockv2.vercel.app](https://lumenlockv2.vercel.app)
+- 📝 **Live Feedback Form**: [https://lumenlockv2.vercel.app/feedback](https://lumenlockv2.vercel.app/feedback)
 - 📜 **MarketplaceRegistry Contract**: [`CDVABICJWCR6AMMCF3FY55GFVF7CIPRTY6IA53YLWF65RYSZN5DNO3GP`](https://stellar.expert/explorer/testnet/contract/CDVABICJWCR6AMMCF3FY55GFVF7CIPRTY6IA53YLWF65RYSZN5DNO3GP)
 - 🔒 **EscrowVault Contract**: [`CBXIOF3DI2FHF3IVD6AMB552OFZCTWSQWM4RYNARLPEMAJD4SXLI3WAP`](https://stellar.expert/explorer/testnet/contract/CBXIOF3DI2FHF3IVD6AMB552OFZCTWSQWM4RYNARLPEMAJD4SXLI3WAP)
 - 🔑 **Admin Account**: [`GCO6OXKDFHGBZDNY4GBBJCB7HECZTGPWMTXPQE35RYXI5Q2A42JENFYH`](https://stellar.expert/explorer/testnet/account/GCO6OXKDFHGBZDNY4GBBJCB7HECZTGPWMTXPQE35RYXI5Q2A42JENFYH)
@@ -29,12 +30,17 @@ We have built LumenLock to be fully production-ready, featuring a desktop and mo
 #### 🖥️ Desktop UI
 Our web application features a premium, responsive dashboard for desktop screens, optimized for managing listings, escrows, and disputes.
 
-<img width="850" alt="LumenLock Desktop Interface" src="https://github.com/user-attachments/assets/917c4642-29ea-4796-8b4e-4e437fbac178" />
+<img width="960" height="564" alt="Screenshot 2026-08-31 235219" src="https://github.com/user-attachments/assets/9ae295d2-4f84-4c94-9e48-ede811521256" />
 
 #### 📱 Mobile Responsive UI
 Our web application is optimized for mobile devices, supporting native Freighter wallet connections and responsive views for P2P interactions.
 
-<img width="360" alt="LumenLock Mobile Interface" src="https://github.com/user-attachments/assets/394d7803-fc37-4949-b9dd-897b4980a281" />
+<img width="757" height="1600" alt="WhatsApp Image 2026-08-31 at 23 41 14" src="https://github.com/user-attachments/assets/3a156eaa-f6cb-4cef-8f12-1573e524db98" />
+
+#### 💸 Transaction & Wallet Signing Flow
+Real-time Stellar transaction execution and wallet signature prompt during escrow operations.
+
+<img width="960" height="564" alt="Screenshot 2026-08-31 235301" src="https://github.com/user-attachments/assets/d708830c-e033-4024-b5c8-90524c55f408" />
 
 #### 📽️ Demo Video
 Here is a 1-2 minute video walk-through demonstrating mobile navigation and wallet interactions.
