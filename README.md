@@ -6,7 +6,7 @@
 
 ### 🌐 Live Demo & Deployments
 
-- 🖥️ **Production Web App**: [https://lumenlock.vercel.app](https://lumenlock.vercel.app) | [https://lumenlockv2.vercel.app](https://lumenlockv2.vercel.app)
+- 🖥️ **Production Web App**: [https://lumenlockv2.vercel.app](https://lumenlockv2.vercel.app)
 - 📝 **Live Feedback Form**: [https://lumenlockv2.vercel.app/feedback](https://lumenlockv2.vercel.app/feedback)
 - 📜 **MarketplaceRegistry Contract**: [`CDVABICJWCR6AMMCF3FY55GFVF7CIPRTY6IA53YLWF65RYSZN5DNO3GP`](https://stellar.expert/explorer/testnet/contract/CDVABICJWCR6AMMCF3FY55GFVF7CIPRTY6IA53YLWF65RYSZN5DNO3GP)
 - 🔒 **EscrowVault Contract**: [`CBXIOF3DI2FHF3IVD6AMB552OFZCTWSQWM4RYNARLPEMAJD4SXLI3WAP`](https://stellar.expert/explorer/testnet/contract/CBXIOF3DI2FHF3IVD6AMB552OFZCTWSQWM4RYNARLPEMAJD4SXLI3WAP)
@@ -55,8 +55,8 @@ Continuous Integration via GitHub Actions automatically builds the Rust contract
 Our comprehensive test suite validates both smart contracts (Rust/Soroban) and frontend components (Vitest). All tests are currently passing successfully.
 ![Passing Test Outputs](./docs/assets/test_output_cli.png)
 
-[![PR Checks](https://github.com/dev-rps/lumenlock/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/dev-rps/lumenlock/actions/workflows/pr-checks.yml)
-[![Deploy](https://github.com/dev-rps/lumenlock/actions/workflows/deploy.yml/badge.svg)](https://github.com/dev-rps/lumenlock/actions/workflows/deploy.yml)
+[![PR Checks](https://github.com/dev-rps/lumenlockv2/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/dev-rps/lumenlockv2/actions/workflows/pr-checks.yml)
+[![Deploy](https://github.com/dev-rps/lumenlockv2/actions/workflows/deploy.yml/badge.svg)](https://github.com/dev-rps/lumenlockv2/actions/workflows/deploy.yml)
 
 ---
 
@@ -95,9 +95,9 @@ LumenLock has onboarded **15 active beta users** on the Stellar testnet. Each re
 ### 📊 Feedback Dataset & Neon PostgreSQL Backend
 
 - 📥 **Latest CSV Dataset File**: [user_feedback_dataset.csv](https://github.com/user-attachments/files/31657733/user_feedback_dataset.2.csv) — direct download link for the latest beta user feedback dataset
-- **Live Dynamic CSV Export**: [`/api/feedback/export`](https://lumenlock.vercel.app/api/feedback/export) — dynamically exports all feedback entries directly from Neon PostgreSQL cloud database (sorted with **newest entries on top**)
-- **Live Feedback Form**: [`/feedback`](https://lumenlock.vercel.app/feedback) — interactive feedback form saving submissions to Neon PostgreSQL
-- **API Endpoint**: `GET /api/feedback` — returns all feedback submissions and live average ratings from Neon PostgreSQL
+- **Live Dynamic CSV Export**: [`/api/feedback/export`](https://lumenlockv2.vercel.app/api/feedback/export) — dynamically exports all feedback entries directly from Neon PostgreSQL cloud database (sorted with **newest entries on top**)
+- **Live Feedback Form**: [`/feedback`](https://lumenlockv2.vercel.app/feedback) — interactive feedback form saving submissions to Neon PostgreSQL
+- **API Endpoint**: [`GET /api/feedback`](https://lumenlockv2.vercel.app/api/feedback) — returns all feedback submissions and live average ratings from Neon PostgreSQL
 - **Cloud Database**: Powered by **Neon Serverless PostgreSQL** pool connection string
 
 ### 🔐 Authentication & Cloud Database System
@@ -422,8 +422,8 @@ cargo install stellar-cli --features opt
 ### 1. Clone and setup
 
 ```bash
-git clone https://github.com/your-org/lumenlock.git
-cd lumenlock
+git clone https://github.com/dev-rps/lumenlockv2.git
+cd lumenlockv2
 cp .env.example frontend/.env.local
 ```
 
@@ -664,7 +664,7 @@ MIT — See [LICENSE](./LICENSE)
 ---
 
 - **Author**: dev-rps
-- **Repository**: [https://github.com/dev-rps/lumenlock](https://github.com/dev-rps/lumenlock)
+- **Repository**: [https://github.com/dev-rps/lumenlockv2](https://github.com/dev-rps/lumenlockv2)
 
 ---
 
