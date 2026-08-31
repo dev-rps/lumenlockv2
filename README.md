@@ -130,10 +130,10 @@ Based on tester feedback, the following improvements were made:
 | Dark mode requested | Arjun Mehta (Pune) | Logged for v3 roadmap |
 | Lobstr wallet support | Arjun Mehta (Pune) | Added to roadmap; Freighter primary for now |
 
-<!-- COMMIT: seed-script-and-feedback-dataset sha=TBD -->
-<!-- COMMIT: auth-login-signup-system sha=TBD -->
-<!-- COMMIT: animated-landing-page sha=TBD -->
-<!-- COMMIT: feedback-backend-api sha=TBD -->
+- [Seed Script & CSV Dataset (`87fd75f`)](https://github.com/dev-rps/lumenlockv2/commit/87fd75f)
+- [Auth System (`87fd75f`)](https://github.com/dev-rps/lumenlockv2/commit/87fd75f)
+- [Animated Landing Page (`87fd75f`)](https://github.com/dev-rps/lumenlockv2/commit/87fd75f)
+- [Feedback Backend API (`87fd75f`)](https://github.com/dev-rps/lumenlockv2/commit/87fd75f)
 
 ---
 
