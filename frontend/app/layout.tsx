@@ -73,7 +73,7 @@ export default function RootLayout({
           <StellarWalletKitProvider>
             <AuthSessionProvider />
             <Navbar />
-            <main className="flex-1 w-full pb-20 md:pb-8">{children}</main>
+            <main className="flex-1 w-full pb-12 md:pb-4">{children}</main>
             <Footer />
             <MobileNav />
             <ToastContainer />
