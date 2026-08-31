@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Geist } from "next/font/google";
 import "./globals.css";
 import QueryClientProvider from "./providers/QueryClientProvider";
 import { Navbar } from "./components/layout/Navbar";
@@ -15,10 +15,16 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const geist = Geist({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-geist",
+});
+
 export const metadata: Metadata = {
   title: "LumenLock v2 — Decentralized Escrow Marketplace on Stellar Soroban",
   description:
-    "Trustless peer-to-peer commerce and service agreements secured by Soroban smart contract escrows with bilateral confirmation, milestone payouts, and telemetry telemetry monitoring.",
+    "Trustless peer-to-peer commerce and service agreements secured by Soroban smart contract escrows with bilateral confirmation, milestone payouts, and monitoring.",
   keywords: [
     "Stellar",
     "Soroban",
@@ -55,8 +61,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className="font-sans antialiased bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+    <html
+      lang="en"
+      className={`${inter.variable} ${geist.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="font-sans antialiased min-h-screen flex flex-col">
         <QueryClientProvider>
           <StellarWalletKitProvider>
             <Navbar />

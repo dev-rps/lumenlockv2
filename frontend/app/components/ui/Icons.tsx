@@ -440,3 +440,13 @@ export const Home = createIcon(
   </>
 );
 
+export const ChevronDown = createIcon(
+  "ChevronDown",
+  <polyline points="6 9 12 15 18 9" />
+);
+
+export const Minus = createIcon(
+  "Minus",
+  <line x1="5" y1="12" x2="19" y2="12" />
+);
+
