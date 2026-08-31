@@ -130,7 +130,7 @@ async function requestWalletSignature(
     const freighterApi = await import("@stellar/freighter-api");
     if (freighterApi && typeof freighterApi.isAllowed === "function") {
       const allowed = await freighterApi.isAllowed();
-      if (allowed && freighterApi.signTransaction) {
+      if (allowed && typeof freighterApi.signTransaction === "function") {
         console.log(`[Freighter Wallet] Requesting wallet signature for operation: ${actionName}`);
       }
     }
@@ -141,7 +141,7 @@ async function requestWalletSignature(
   try {
     // 2. Try StellarWalletsKit if active wallet exists
     const { StellarWalletsKit } = await import("@creit.tech/stellar-wallets-kit");
-    if (signerAddress && StellarWalletsKit) {
+    if (signerAddress && typeof StellarWalletsKit !== "undefined") {
       console.log(`[StellarWalletsKit] Signature requested for address: ${signerAddress}`);
     }
   } catch {
