@@ -2,12 +2,12 @@
  * app/lib/auth.ts
  *
  * Auth helpers: JWT signing/verification + password hashing.
- * Seed users are embedded as constants so they always work on Vercel
- * (no filesystem dependency for pre-seeded accounts).
+ * Powered by Neon Serverless PostgreSQL backend.
  */
 
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
+import { query, initDatabase } from "./db";
 import { readJson, appendToArray } from "./storage";
 
 // ─── Config ─────────────────────────────────────────────────────────────────
@@ -38,10 +38,7 @@ export interface JwtPayload {
   role:  string;
 }
 
-// ─── Seeded Indian Tester Accounts (always available, even on Vercel) ────────
-// Passwords are bcrypt hashed (plain: "Lumen@2026")
-// Verified hash: $2b$10$ZD2ASpXOwRU42o.1qIETuuPKTBuUpww8YSc6IbFae7gz5YoE4ooJC
-
+// ─── Seeded Indian Tester Accounts (Fallback for offline testing) ─────────────
 const TESTER_HASH = "$2b$10$ZD2ASpXOwRU42o.1qIETuuPKTBuUpww8YSc6IbFae7gz5YoE4ooJC";
 
 const SEEDED_USERS: AuthUser[] = [
@@ -62,32 +59,47 @@ const SEEDED_USERS: AuthUser[] = [
   { id:"tester_015", name:"Aditya Kulkarni", email:"aditya.kulkarni@gmail.com", passwordHash:TESTER_HASH, walletAddress:"GADITYAKULKRST3LL4RN3TW4LL3TADDR3SS015XXXXXXXXXXXXXXXXXX", city:"Nagpur",     role:"tester", joinedAt:"2026-08-10T10:00:00.000Z" },
 ];
 
-// ─── In-memory Runtime Users Cache ──────────────────────────────────────────
 const MEMORY_USERS: AuthUser[] = [];
 
 export async function getAllUsers(): Promise<AuthUser[]> {
+  try {
+    await initDatabase();
+    const res = await query<AuthUser>(
+      'SELECT id, name, email, password_hash AS "passwordHash", wallet_address AS "walletAddress", city, role, joined_at AS "joinedAt" FROM users ORDER BY joined_at DESC;'
+    );
+    if (res.rows && res.rows.length > 0) {
+      return res.rows;
+    }
+  } catch (err) {
+    console.error("Neon DB query error in getAllUsers, falling back to local storage/seed:", err);
+  }
+
+  // Fallback merge
   const runtimeUsers = await readJson<AuthUser[]>("users.json", []);
-
-  // Merge order: MEMORY_USERS > runtimeUsers (from disk) > SEEDED_USERS
   const userMap = new Map<string, AuthUser>();
-
-  for (const u of SEEDED_USERS) {
-    userMap.set(u.email.toLowerCase(), u);
-  }
-  for (const u of runtimeUsers) {
-    if (u.email) userMap.set(u.email.toLowerCase(), u);
-  }
-  for (const u of MEMORY_USERS) {
-    if (u.email) userMap.set(u.email.toLowerCase(), u);
-  }
-
+  for (const u of SEEDED_USERS) userMap.set(u.email.toLowerCase(), u);
+  for (const u of runtimeUsers) if (u.email) userMap.set(u.email.toLowerCase(), u);
+  for (const u of MEMORY_USERS) if (u.email) userMap.set(u.email.toLowerCase(), u);
   return Array.from(userMap.values());
 }
 
 export async function findUserByEmail(email: string): Promise<AuthUser | null> {
   const cleanEmail = email.trim().toLowerCase();
+  try {
+    await initDatabase();
+    const res = await query<AuthUser>(
+      'SELECT id, name, email, password_hash AS "passwordHash", wallet_address AS "walletAddress", city, role, joined_at AS "joinedAt" FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1;',
+      [cleanEmail]
+    );
+    if (res.rows && res.rows.length > 0) {
+      return res.rows[0];
+    }
+  } catch (err) {
+    console.error("Neon DB query error in findUserByEmail:", err);
+  }
+
   const all = await getAllUsers();
-  return all.find(u => u.email.toLowerCase() === cleanEmail) ?? null;
+  return all.find((u) => u.email.toLowerCase() === cleanEmail) ?? null;
 }
 
 export async function createUser(data: {
@@ -101,6 +113,8 @@ export async function createUser(data: {
 
   const passwordHash = await bcrypt.hash(data.password, 10);
   const id = `user_${Date.now()}`;
+  const joinedAt = new Date().toISOString();
+
   const user: AuthUser = {
     id,
     name:          data.name.trim(),
@@ -109,17 +123,30 @@ export async function createUser(data: {
     walletAddress: "",
     city:          "",
     role:          "user",
-    joinedAt:      new Date().toISOString(),
+    joinedAt,
   };
 
-  // 1. Always store in runtime memory cache
-  MEMORY_USERS.push(user);
+  // 1. Store in Neon PostgreSQL
+  try {
+    await initDatabase();
+    await query(
+      `INSERT INTO users (id, name, email, password_hash, wallet_address, city, role, joined_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (id) DO UPDATE SET
+         name = EXCLUDED.name,
+         password_hash = EXCLUDED.password_hash;`,
+      [user.id, user.name, user.email, user.passwordHash, user.walletAddress, user.city, user.role, user.joinedAt]
+    );
+  } catch (err) {
+    console.error("Neon DB error in createUser:", err);
+  }
 
-  // 2. Persist to users.json
+  // 2. Memory & JSON fallback
+  MEMORY_USERS.push(user);
   try {
     await appendToArray<AuthUser>("users.json", user);
   } catch {
-    // Memory fallback ensures registration succeeds even on read-only environments
+    // ignore
   }
 
   return user;
@@ -138,7 +165,7 @@ export async function verifyCredentials(
     return user;
   }
 
-  // Try standard bcrypt comparison
+  // Standard bcrypt comparison
   try {
     if (user.passwordHash) {
       const ok = await bcrypt.compare(password, user.passwordHash);

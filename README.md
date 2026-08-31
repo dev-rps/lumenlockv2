@@ -86,31 +86,34 @@ LumenLock has onboarded **15 active beta users** on the Stellar testnet. Each re
 
 > **Default password** (for demo testing): `Lumen@2026`
 
-### 📊 Feedback Dataset
+### 📊 Feedback Dataset & Neon PostgreSQL Backend
 
-- **CSV Export**: [`/user_feedback_dataset.csv`](https://lumenlock.vercel.app/user_feedback_dataset.csv) — statically served from `frontend/public/`
-- **Live Feedback Form**: [`/feedback`](https://lumenlock.vercel.app/feedback) — submissions saved to backend JSON store
-- **API Endpoint**: `GET /api/feedback` — returns all submissions with average rating
+- **Live Dynamic CSV Export**: [`/api/feedback/export`](https://lumenlock.vercel.app/api/feedback/export) — dynamically exports all feedback entries directly from Neon PostgreSQL cloud database (sorted with **newest entries on top**)
+- **Live Feedback Form**: [`/feedback`](https://lumenlock.vercel.app/feedback) — interactive feedback form saving submissions to Neon PostgreSQL
+- **API Endpoint**: `GET /api/feedback` — returns all feedback submissions and live average ratings from Neon PostgreSQL
+- **Cloud Database**: Powered by **Neon Serverless PostgreSQL** pool connection string
 
-### 🔐 Authentication System
+### 🔐 Authentication & Cloud Database System
 
-LumenLock includes a full login/signup system:
+LumenLock features a production-ready authentication and database backend system backed by **Neon PostgreSQL**:
 
-| Route | Description |
-|-------|-------------|
+| Route / System | Description |
+|----------------|-------------|
+| `DATABASE_URL` | Neon Serverless PostgreSQL connection pool string in `.env.local` |
+| `app/lib/db.ts` | Serverless pool connection client & automatic table DDL initialization |
 | `/auth/login` | Animated split-panel login page |
 | `/auth/signup` | Signup with password strength meter |
-| `POST /api/auth/login` | Issues httpOnly JWT cookie (7d expiry) |
-| `POST /api/auth/signup` | Creates account + auto-login |
-| `GET /api/auth/me` | Returns current user from JWT |
-| `POST /api/auth/logout` | Clears cookie |
+| `POST /api/auth/login` | Verifies credentials against Neon Postgres + issues httpOnly JWT cookie |
+| `POST /api/auth/signup` | Creates user in Neon Postgres + auto-logins user |
+| `GET /api/auth/me` | Fetches active user profile from Neon Postgres via JWT |
+| `GET /api/feedback/export` | Generates & downloads live CSV dataset of all feedbacks (newest on top) |
 
-**Vercel Deployment Note**: Pre-provisioned user accounts are initialized in `app/lib/auth.ts` — guaranteed to work in live Vercel deployments. New user signups & live feedback submissions persist seamlessly in runtime memory and backend JSON storage.
-
-**Required Environment Variable (set in Vercel dashboard)**:
-```
+**Required Environment Variables (set in Vercel / local `.env.local`)**:
+```env
 JWT_SECRET=your_32_char_random_secret_here
+DATABASE_URL=postgresql://neondb_owner:npg_5pVoARJvdt2b@ep-aged-wildflower-azcaggty-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
 ```
+
 
 ### 📈 Feedback Iteration Improvements
 
