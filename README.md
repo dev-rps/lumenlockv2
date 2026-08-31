@@ -55,9 +55,6 @@ Continuous Integration via GitHub Actions automatically builds the Rust contract
 Our comprehensive test suite validates both smart contracts (Rust/Soroban) and frontend components (Vitest). All tests are currently passing successfully.
 ![Passing Test Outputs](./docs/assets/test_output_cli.png)
 
-[![PR Checks](https://github.com/dev-rps/lumenlockv2/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/dev-rps/lumenlockv2/actions/workflows/pr-checks.yml)
-[![Deploy](https://github.com/dev-rps/lumenlockv2/actions/workflows/deploy.yml/badge.svg)](https://github.com/dev-rps/lumenlockv2/actions/workflows/deploy.yml)
-
 ---
 
 ## 👥 Active User Community, Contract Activity & Feedback Dataset
