@@ -33,3 +33,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local data store (auth users + feedback submissions)
+# On Vercel these live in /tmp; locally they live here
+/data

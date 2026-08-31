@@ -6,6 +6,16 @@ import { usePathname } from "next/navigation";
 import { Compass, LayoutDashboard, PlusCircle, Activity, Settings } from "@/app/components/ui/Icons";
 import { cn } from "@/app/lib/utils";
 
+// Inline star icon for Feedback
+function StarIcon({ className }: { className?: string }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </svg>
+  );
+}
+
 export function MobileNav() {
   const pathname = usePathname();
 
@@ -14,7 +24,7 @@ export function MobileNav() {
     { label: "Dashboard", href: "/dashboard",   icon: LayoutDashboard },
     { label: "Create",    href: "/create",      icon: PlusCircle, isPrimary: true },
     { label: "Activity",  href: "/activity",    icon: Activity },
-    { label: "Settings",  href: "/settings",    icon: Settings },
+    { label: "Feedback",  href: "/feedback",    icon: StarIcon },
   ];
 
   return (

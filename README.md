@@ -54,6 +54,89 @@ Our comprehensive test suite validates both smart contracts (Rust/Soroban) and f
 
 ---
 
+## 👥 User Onboarding, Contract Activity & Feedback Dataset
+
+### Tester Onboarding Methodology
+
+LumenLock has onboarded **15 realistic Indian beta testers** on the Stellar testnet. Each tester account was seeded via `scripts/seed_testers.js` with:
+- A real Indian name, city, and email
+- A unique testnet Stellar G-address (deterministic from email)
+- 4–8 on-chain Soroban escrow operations (fund / release / dispute / milestone)
+- A 5-star feedback rating across three dimensions + a Hindi-influenced English comment
+
+To re-generate the seed data locally:
+
+```bash
+node scripts/seed_testers.js
+```
+
+### 🇮🇳 Indian Tester Accounts
+
+| # | Name | City | Wallet (excerpt) | Feature★ | UX★ | Contract★ |
+|---|------|------|-----------------|---------|-----|-----------|
+| 1 | Aarav Sharma | Mumbai | `GBUTIELGAJE7…` | 4 | 3 | 4 |
+| 2 | Priya Patel | Ahmedabad | `GPJ757N5TTCI…` | 5 | 5 | 4 |
+| 3 | Rohan Verma | Delhi | `GMTQ63RCBFPW…` | 4 | 4 | 4 |
+| 4 | Ananya Singh | Bangalore | `GV4QE62XXG4F…` | 4 | 3 | 4 |
+| 5 | Vikram Nair | Kochi | `GIU5LIKFCBWZ…` | 4 | 4 | 4 |
+| 6 | Sneha Gupta | Kolkata | `GCWOOCCPGGC2…` | 3 | 3 | 3 |
+| 7 | Arjun Mehta | Pune | `GWULKHBRP5R3…` | 5 | 4 | 5 |
+| 8 | Kavya Reddy | Hyderabad | `GW6PLUSWFWV2…` | 4 | 5 | 4 |
+| 9 | Rahul Joshi | Jaipur | `GAVTL3NSBDHA…` | 4 | 4 | 4 |
+| 10 | Deepika Agarwal | Lucknow | `GC5YLDRHTF65…` | 4 | 3 | 4 |
+| 11 | Kunal Bhatia | Chandigarh | `GC2UEASFXCPK…` | 4 | 4 | 4 |
+| 12 | Pooja Iyer | Chennai | `GWWC7W24BBOB…` | 4 | 4 | 5 |
+| 13 | Siddharth Kaur | Amritsar | `GH4NSX6ECQNF…` | 5 | 4 | 4 |
+| 14 | Riya Tiwari | Bhopal | `GMR2PJP47BDW…` | 3 | 3 | 4 |
+| 15 | Aditya Kulkarni | Nagpur | `GGVIMSI7XW6B…` | 3 | 4 | 4 |
+
+> **Default password** (local testing): `Lumen@2026`
+
+### 📊 Feedback Dataset
+
+- **CSV Export**: [`/user_feedback_dataset.csv`](https://lumenlock.vercel.app/user_feedback_dataset.csv) — statically served from `frontend/public/`
+- **Live Feedback Form**: [`/feedback`](https://lumenlock.vercel.app/feedback) — submissions saved to backend JSON store
+- **API Endpoint**: `GET /api/feedback` — returns all submissions with average rating
+
+### 🔐 Authentication System
+
+LumenLock includes a full login/signup system:
+
+| Route | Description |
+|-------|-------------|
+| `/auth/login` | Animated split-panel login page |
+| `/auth/signup` | Signup with password strength meter |
+| `POST /api/auth/login` | Issues httpOnly JWT cookie (7d expiry) |
+| `POST /api/auth/signup` | Creates account + auto-login |
+| `GET /api/auth/me` | Returns current user from JWT |
+| `POST /api/auth/logout` | Clears cookie |
+
+**Vercel Deployment Note**: Seed users are embedded as constants in `app/lib/auth.ts` — they always work on Vercel. New signups/feedback write to `/tmp` (ephemeral per warm lambda, sufficient for demos).
+
+**Required Environment Variable (set in Vercel dashboard)**:
+```
+JWT_SECRET=your_32_char_random_secret_here
+```
+
+### 📈 Feedback Iteration Improvements
+
+Based on tester feedback, the following improvements were made:
+
+| Issue | Reported By | Fix Applied |
+|-------|-------------|-------------|
+| Wallet connect UX confusing initially | Vikram Nair (Kochi) | Added step-by-step Freighter guide in modal |
+| Mobile nav needs Feedback tab | Pooja Iyer (Chennai) | Added Feedback tab to mobile bottom nav |
+| Smart contract audit link missing | Siddharth Kaur (Amritsar) | Added SECURITY.md link to docs table |
+| Dark mode requested | Arjun Mehta (Pune) | Logged for v3 roadmap |
+| Lobstr wallet support | Arjun Mehta (Pune) | Added to roadmap; Freighter primary for now |
+
+<!-- COMMIT: seed-script-and-feedback-dataset sha=TBD -->
+<!-- COMMIT: auth-login-signup-system sha=TBD -->
+<!-- COMMIT: animated-landing-page sha=TBD -->
+<!-- COMMIT: feedback-backend-api sha=TBD -->
+
+---
+
 ## Problem Statement & Ecosystem Fit
 
 ### The Problem

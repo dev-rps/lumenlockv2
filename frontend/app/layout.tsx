@@ -8,6 +8,8 @@ import { Footer } from "./components/layout/Footer";
 import { ToastContainer } from "./components/ui/ToastContainer";
 import { WalletModal } from "./components/wallet/WalletModal";
 import { StellarWalletKitProvider } from "./providers/StellarWalletKitProvider";
+import { FeedbackFAB } from "./components/feedback/FeedbackFAB";
+import { AuthSessionProvider } from "./providers/AuthSessionProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -69,12 +71,14 @@ export default function RootLayout({
       <body className="font-sans antialiased min-h-screen flex flex-col">
         <QueryClientProvider>
           <StellarWalletKitProvider>
+            <AuthSessionProvider />
             <Navbar />
             <main className="flex-1 w-full pb-20 md:pb-8">{children}</main>
             <Footer />
             <MobileNav />
             <ToastContainer />
             <WalletModal />
+            <FeedbackFAB />
           </StellarWalletKitProvider>
         </QueryClientProvider>
       </body>

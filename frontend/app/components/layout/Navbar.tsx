@@ -15,6 +15,7 @@ import {
   ChevronDown,
 } from "@/app/components/ui/Icons";
 import { useWalletStore } from "@/app/state/walletStore";
+import { useAuthStore } from "@/app/state/authStore";
 import { truncateAddress } from "@/app/services/formatters";
 import { cn } from "@/app/lib/utils";
 
@@ -30,11 +31,14 @@ export function Navbar() {
   }, []);
 
   const navLinks = [
-    { label: "Marketplace", href: "/marketplace", icon: Compass },
-    { label: "Dashboard",   href: "/dashboard",   icon: LayoutDashboard },
-    { label: "Activity",    href: "/activity",     icon: Activity },
-    { label: "Transactions",href: "/transactions", icon: ArrowUpRight },
+    { label: "Marketplace", href: "/marketplace",  icon: Compass },
+    { label: "Dashboard",   href: "/dashboard",    icon: LayoutDashboard },
+    { label: "Activity",    href: "/activity",      icon: Activity },
+    { label: "Transactions",href: "/transactions",  icon: ArrowUpRight },
+    { label: "Feedback",    href: "/feedback",      icon: Activity },
   ];
+
+  const { user, isLoggedIn, logout } = useAuthStore();
 
   return (
     <header
@@ -119,20 +123,39 @@ export function Navbar() {
         {/* ── Right Actions ── */}
         <div className="flex items-center gap-2">
 
-          {/* Create Listing */}
-          <Link
-            href="/create"
-            className={cn(
-              "hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl",
-              "text-xs font-semibold text-white",
-              "bg-[var(--primary-600)] hover:bg-[var(--primary-700)]",
-              "shadow-[var(--shadow-primary)]",
-              "transition-all duration-150 active:scale-[0.97] focus-ring"
-            )}
-          >
-            <PlusCircle className="w-3.5 h-3.5" />
-            <span>Create Listing</span>
-          </Link>
+          {/* Auth / Login */}
+          {isLoggedIn && user ? (
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline text-xs font-semibold" style={{ color:"var(--fg-default)" }}>
+                {user.name.split(" ")[0]}
+              </span>
+              <button
+                onClick={() => logout()}
+                className={cn(
+                  "hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl",
+                  "text-xs font-semibold",
+                  "border border-[var(--border-subtle)] bg-[var(--surface-0)]",
+                  "hover:bg-[var(--surface-1)] transition-all duration-150 focus-ring"
+                )}
+                style={{ color:"var(--fg-muted)" }}
+              >
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/auth/login"
+              className={cn(
+                "hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl",
+                "text-xs font-semibold text-white",
+                "bg-[var(--primary-600)] hover:bg-[var(--primary-700)]",
+                "shadow-[var(--shadow-primary)]",
+                "transition-all duration-150 active:scale-[0.97] focus-ring"
+              )}
+            >
+              Sign In
+            </Link>
+          )}
 
           {/* Network badge */}
           <div
