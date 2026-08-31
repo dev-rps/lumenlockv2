@@ -335,9 +335,11 @@ No blockchain logic lives in React components. Components receive data and callb
 - **Zustand**: Wallet state (address, network, connection status), transaction queue
 - **React Query**: All blockchain data (listings, escrow state, balances) with automatic refetch
 
-**Event streaming**:
+**Event streaming & Telemetry**:
 - RPC `getEvents` polling every 3 seconds for new contract events
 - Events parsed and dispatched to activity feed Zustand store
+- **Client-Side Telemetry & Monitoring Service (`telemetry.ts`)**: Tracks Web Vitals (FID, LCP, CLS, TTFB), Soroban RPC execution latency, wallet connections, contract call statuses, and client-side error telemetry logs in real time.
+- Integrated into `/analytics` dashboard for real-time monitoring and RPC node diagnostics.
 - UI components subscribe to store for real-time updates
 
 ---

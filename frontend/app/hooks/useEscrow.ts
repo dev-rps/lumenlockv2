@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ContractService } from "@/app/services/contract";
 import { EventService } from "@/app/services/events";
+import { telemetry } from "@/app/services/telemetry";
 import { useToastStore } from "@/app/state/toastStore";
 import { useTxStore } from "@/app/state/txStore";
 import { STELLAR_CONFIG } from "@/app/services/stellar";
@@ -37,7 +38,12 @@ export function useOpenEscrow() {
       });
 
       try {
-        const { escrowId, txHash } = await ContractService.openEscrow(params);
+        const { escrowId, txHash } = await telemetry.trackExecution(
+          "contract",
+          "open_escrow",
+          () => ContractService.openEscrow(params),
+          { listingId: params.listingId, buyer: params.buyer }
+        );
 
         removeToast(toastId);
 
@@ -96,7 +102,12 @@ export function useFundEscrow() {
       });
 
       try {
-        const { txHash } = await ContractService.fundEscrow(escrowId);
+        const { txHash } = await telemetry.trackExecution(
+          "contract",
+          "fund_escrow",
+          () => ContractService.fundEscrow(escrowId),
+          { escrowId }
+        );
 
         removeToast(toastId);
 

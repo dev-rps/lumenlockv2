@@ -18,7 +18,35 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "LumenLock v2 — Decentralized Escrow Marketplace on Stellar Soroban",
   description:
-    "Trustless peer-to-peer commerce and service agreements secured by Soroban smart contract escrows with bilateral confirmation and milestone payouts.",
+    "Trustless peer-to-peer commerce and service agreements secured by Soroban smart contract escrows with bilateral confirmation, milestone payouts, and telemetry telemetry monitoring.",
+  keywords: [
+    "Stellar",
+    "Soroban",
+    "Smart Contract",
+    "Escrow",
+    "Web3",
+    "Decentralized Marketplace",
+    "Milestone Payments",
+    "XLM",
+    "USDC",
+  ],
+  authors: [{ name: "LumenLock Architecture Team" }],
+  openGraph: {
+    title: "LumenLock v2 — Decentralized Escrow Marketplace on Stellar Soroban",
+    description:
+      "Trustless P2P commerce & milestone escrow agreements secured by Soroban smart contracts.",
+    url: "https://lumenlock.app",
+    siteName: "LumenLock v2",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LumenLock v2 — Stellar Soroban Escrow Protocol",
+    description:
+      "Trustless peer-to-peer commerce secured by Soroban smart contract escrows.",
+  },
+  metadataBase: new URL("https://lumenlock.app"),
 };
 
 export default function RootLayout({
