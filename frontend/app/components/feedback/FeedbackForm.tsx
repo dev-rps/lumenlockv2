@@ -21,7 +21,14 @@ export function FeedbackForm({ onSuccess, compact = false }: FeedbackFormProps) 
   const [bugsReported, setBugsReported] = useState("");
   const [improvements, setImprovements] = useState("");
   const [recommend, setRecommend] = useState<"Yes" | "No" | "Maybe">("Yes");
-  const [overallRating, setOverallRating] = useState<number>(5);
+  const [featureRating, setFeatureRating] = useState<number>(5);
+  const [uxRating, setUxRating] = useState<number>(5);
+  const [contractRating, setContractRating] = useState<number>(5);
+
+  // Auto-calculated Overall Rating (average of feature, ux, and contract ratings)
+  const rawAvg = (featureRating + uxRating + contractRating) / 3;
+  const overallRating = Math.round(rawAvg);
+  const overallFormatted = rawAvg.toFixed(1);
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -47,10 +54,6 @@ export function FeedbackForm({ onSuccess, compact = false }: FeedbackFormProps) 
         setError("Network selection is required.");
         return;
       }
-      if (!overallRating) {
-        setError("Please select a satisfaction rating.");
-        return;
-      }
 
       setError("");
       setLoading(true);
@@ -67,6 +70,9 @@ export function FeedbackForm({ onSuccess, compact = false }: FeedbackFormProps) 
             bugsReported: bugsReported.trim() || "N/A",
             improvements: improvements.trim(),
             recommend,
+            featureRating,
+            uxRating,
+            contractRating,
             overallRating,
           }),
         });
@@ -85,7 +91,7 @@ export function FeedbackForm({ onSuccess, compact = false }: FeedbackFormProps) 
       }
       setLoading(false);
     },
-    [name, email, walletAddress, network, bugsReported, improvements, recommend, overallRating, onSuccess]
+    [name, email, walletAddress, network, bugsReported, improvements, recommend, featureRating, uxRating, contractRating, overallRating, onSuccess]
   );
 
   if (success) {
@@ -272,38 +278,185 @@ export function FeedbackForm({ onSuccess, compact = false }: FeedbackFormProps) 
         </div>
       </div>
 
-      {/* Please rate your satisfaction of the LumenLock platform: * */}
-      <div className="space-y-2.5 p-5 rounded-2xl" style={{ background: "var(--surface-1)", border: "1px solid var(--border-subtle)" }}>
-        <div className="flex items-center justify-between">
-          <label className="text-sm font-semibold flex items-center gap-1" style={{ color: "var(--fg-default)" }}>
-            Please rate your satisfaction of the LumenLock platform: <span className="text-red-500">*</span>
-          </label>
-          <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg" style={{ background: "var(--primary-100)", color: "var(--primary-700)" }}>
-            {overallRating} / 5
+      {/* Category Ratings Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: "var(--border-subtle)" }}>
+          <div>
+            <h4 className="text-sm font-bold" style={{ color: "var(--fg-default)" }}>Detailed Category Ratings</h4>
+            <p className="text-xs" style={{ color: "var(--fg-muted)" }}>Rate each area from 1 (Poor) to 5 (Excellent)</p>
+          </div>
+          <span className="text-xs font-semibold px-2 py-0.5 rounded" style={{ background: "var(--primary-50)", color: "var(--primary-600)" }}>
+            3 Category Ratings
           </span>
         </div>
 
-        <div className="grid grid-cols-5 gap-2 pt-1">
-          {[1, 2, 3, 4, 5].map((num) => {
-            const active = overallRating === num;
-            return (
-              <button
-                key={num}
-                type="button"
-                onClick={() => setOverallRating(num)}
-                className="h-12 rounded-xl font-bold text-base transition-all duration-150 flex flex-col items-center justify-center"
-                style={{
-                  background: active ? "linear-gradient(135deg, var(--primary-600) 0%, var(--primary-500) 100%)" : "var(--surface-0)",
-                  border: active ? "none" : "1.5px solid var(--border-default)",
-                  color: active ? "#ffffff" : "var(--fg-default)",
-                  boxShadow: active ? "var(--shadow-primary)" : "none",
-                  transform: active ? "scale(1.04)" : "scale(1)",
-                }}
+        {/* 1. Feature Experience Rating */}
+        <div className="space-y-2 p-4 rounded-2xl" style={{ background: "var(--surface-1)", border: "1px solid var(--border-subtle)" }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-sm font-semibold flex items-center gap-1" style={{ color: "var(--fg-default)" }}>
+                Feature Experience <span className="text-red-500">*</span>
+              </label>
+              <p className="text-[11px]" style={{ color: "var(--fg-muted)" }}>Escrow workflows, milestones, dispute resolution</p>
+            </div>
+            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-lg" style={{ background: "var(--primary-100)", color: "var(--primary-700)" }}>
+              {featureRating} / 5
+            </span>
+          </div>
+          <div className="grid grid-cols-5 gap-2 pt-1">
+            {[1, 2, 3, 4, 5].map((num) => {
+              const active = featureRating === num;
+              return (
+                <button
+                  key={num}
+                  type="button"
+                  onClick={() => setFeatureRating(num)}
+                  className="h-10 rounded-xl font-bold text-sm transition-all duration-150 flex items-center justify-center"
+                  style={{
+                    background: active ? "linear-gradient(135deg, var(--primary-600) 0%, var(--primary-500) 100%)" : "var(--surface-0)",
+                    border: active ? "none" : "1.5px solid var(--border-default)",
+                    color: active ? "#ffffff" : "var(--fg-default)",
+                    boxShadow: active ? "var(--shadow-primary)" : "none",
+                    transform: active ? "scale(1.04)" : "scale(1)",
+                  }}
+                >
+                  {num}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 2. UI / UX Design Rating */}
+        <div className="space-y-2 p-4 rounded-2xl" style={{ background: "var(--surface-1)", border: "1px solid var(--border-subtle)" }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-sm font-semibold flex items-center gap-1" style={{ color: "var(--fg-default)" }}>
+                UI / UX Design <span className="text-red-500">*</span>
+              </label>
+              <p className="text-[11px]" style={{ color: "var(--fg-muted)" }}>Interface layout, responsiveness, visual clarity</p>
+            </div>
+            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-lg" style={{ background: "var(--primary-100)", color: "var(--primary-700)" }}>
+              {uxRating} / 5
+            </span>
+          </div>
+          <div className="grid grid-cols-5 gap-2 pt-1">
+            {[1, 2, 3, 4, 5].map((num) => {
+              const active = uxRating === num;
+              return (
+                <button
+                  key={num}
+                  type="button"
+                  onClick={() => setUxRating(num)}
+                  className="h-10 rounded-xl font-bold text-sm transition-all duration-150 flex items-center justify-center"
+                  style={{
+                    background: active ? "linear-gradient(135deg, var(--primary-600) 0%, var(--primary-500) 100%)" : "var(--surface-0)",
+                    border: active ? "none" : "1.5px solid var(--border-default)",
+                    color: active ? "#ffffff" : "var(--fg-default)",
+                    boxShadow: active ? "var(--shadow-primary)" : "none",
+                    transform: active ? "scale(1.04)" : "scale(1)",
+                  }}
+                >
+                  {num}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 3. Smart Contract & Security Rating */}
+        <div className="space-y-2 p-4 rounded-2xl" style={{ background: "var(--surface-1)", border: "1px solid var(--border-subtle)" }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-sm font-semibold flex items-center gap-1" style={{ color: "var(--fg-default)" }}>
+                Smart Contract & Security <span className="text-red-500">*</span>
+              </label>
+              <p className="text-[11px]" style={{ color: "var(--fg-muted)" }}>Wallet integration, transaction safety & trust</p>
+            </div>
+            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-lg" style={{ background: "var(--primary-100)", color: "var(--primary-700)" }}>
+              {contractRating} / 5
+            </span>
+          </div>
+          <div className="grid grid-cols-5 gap-2 pt-1">
+            {[1, 2, 3, 4, 5].map((num) => {
+              const active = contractRating === num;
+              return (
+                <button
+                  key={num}
+                  type="button"
+                  onClick={() => setContractRating(num)}
+                  className="h-10 rounded-xl font-bold text-sm transition-all duration-150 flex items-center justify-center"
+                  style={{
+                    background: active ? "linear-gradient(135deg, var(--primary-600) 0%, var(--primary-500) 100%)" : "var(--surface-0)",
+                    border: active ? "none" : "1.5px solid var(--border-default)",
+                    color: active ? "#ffffff" : "var(--fg-default)",
+                    boxShadow: active ? "var(--shadow-primary)" : "none",
+                    transform: active ? "scale(1.04)" : "scale(1)",
+                  }}
+                >
+                  {num}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Auto-Calculated Overall Rating Summary Card (Just before Submit button) */}
+      <div
+        className="p-5 rounded-2xl relative overflow-hidden transition-all duration-200"
+        style={{
+          background: "linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%)",
+          border: "2px solid var(--primary-500)",
+          boxShadow: "0 4px 20px rgba(79,70,229,0.12)",
+        }}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">✨</span>
+            <div>
+              <h4 className="text-sm font-bold" style={{ color: "var(--fg-default)" }}>
+                Overall Rating (Auto-Calculated)
+              </h4>
+              <p className="text-xs" style={{ color: "var(--fg-muted)" }}>
+                Computed average of Feature, UI/UX, and Smart Contract ratings
+              </p>
+            </div>
+          </div>
+          <span
+            className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full text-white"
+            style={{ background: "linear-gradient(135deg, var(--primary-600) 0%, var(--primary-500) 100%)" }}
+          >
+            Auto Calculated
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: "rgba(79,70,229,0.15)" }}>
+          <div className="flex items-center gap-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <svg
+                key={star}
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill={star <= overallRating ? "#FBBF24" : "none"}
+                stroke={star <= overallRating ? "#FBBF24" : "var(--border-default)"}
+                strokeWidth="1.5"
+                className="transition-all duration-200"
               >
-                <span>{num}</span>
-              </button>
-            );
-          })}
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+            ))}
+          </div>
+          <div className="text-right">
+            <span className="text-2xl font-black font-mono" style={{ color: "var(--primary-700)" }}>
+              {overallFormatted}
+            </span>
+            <span className="text-sm font-bold text-gray-500 ml-1">/ 5</span>
+            <p className="text-[10px] text-gray-500">
+              (Saved as {overallRating}/5 in database & CSV)
+            </p>
+          </div>
         </div>
       </div>
 

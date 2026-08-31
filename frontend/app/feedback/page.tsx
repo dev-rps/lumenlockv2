@@ -14,6 +14,9 @@ interface FeedbackItem {
   improvements?: string;
   recommend?: string;
   overallRating: number;
+  featureRating?: number;
+  uxRating?: number;
+  contractRating?: number;
   comment?: string;
   submittedAt?: string;
 }
@@ -288,6 +291,21 @@ export default function FeedbackPage() {
                             </>
                           )}
                         </div>
+
+                        {/* Category ratings breakdown */}
+                        {(fb.featureRating || fb.uxRating || fb.contractRating) && (
+                          <div className="flex flex-wrap gap-1.5 my-1.5">
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md" style={{ background: "var(--surface-1)", color: "var(--fg-muted)", border: "1px solid var(--border-subtle)" }}>
+                              Feature: {fb.featureRating ?? fb.overallRating}★
+                            </span>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md" style={{ background: "var(--surface-1)", color: "var(--fg-muted)", border: "1px solid var(--border-subtle)" }}>
+                              UI/UX: {fb.uxRating ?? fb.overallRating}★
+                            </span>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md" style={{ background: "var(--surface-1)", color: "var(--fg-muted)", border: "1px solid var(--border-subtle)" }}>
+                              Contract: {fb.contractRating ?? fb.overallRating}★
+                            </span>
+                          </div>
+                        )}
 
                         {fb.comment && (
                           <p className="text-xs leading-relaxed mt-1" style={{ color: "var(--fg-muted)" }}>

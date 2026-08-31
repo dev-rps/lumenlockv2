@@ -43,12 +43,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Name and email are required" }, { status: 400 });
     }
 
-    if (typeof overallRating !== "number" || overallRating < 1 || overallRating > 5) {
-      return NextResponse.json({ error: "Satisfaction rating must be between 1 and 5" }, { status: 400 });
-    }
+    const fRating = typeof featureRating === "number" ? Math.min(5, Math.max(1, Math.round(featureRating))) : 5;
+    const uRating = typeof uxRating === "number" ? Math.min(5, Math.max(1, Math.round(uxRating))) : 5;
+    const cRating = typeof contractRating === "number" ? Math.min(5, Math.max(1, Math.round(contractRating))) : 5;
+
+    // Automatically calculate overall rating from categories if overallRating is missing or to enforce auto-calc
+    const calculatedOverall = Math.round((fRating + uRating + cRating) / 3);
+    const ratingNum = typeof overallRating === "number" ? Math.min(5, Math.max(1, Math.round(overallRating))) : calculatedOverall;
 
     const validRecommend = ["Yes", "No", "Maybe"].includes(recommend) ? recommend : "Yes";
-    const ratingNum = Math.min(5, Math.max(1, Math.round(overallRating)));
 
     const entry: FeedbackEntry = {
       id:             `fb_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -60,9 +63,9 @@ export async function POST(req: NextRequest) {
       improvements:   improvements.trim(),
       recommend:      validRecommend as "Yes" | "No" | "Maybe",
       overallRating:  ratingNum,
-      featureRating:  featureRating ?? ratingNum,
-      uxRating:       uxRating ?? ratingNum,
-      contractRating: contractRating ?? ratingNum,
+      featureRating:  fRating,
+      uxRating:       uRating,
+      contractRating: cRating,
       comment:        comment.trim() || improvements.trim() || (bugsReported !== "N/A" ? bugsReported : ""),
       submittedAt:    new Date().toISOString(),
       userAgent:      req.headers.get("user-agent") ?? undefined,
