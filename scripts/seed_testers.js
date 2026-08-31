@@ -112,7 +112,7 @@ TESTERS.forEach((tester, i) => {
   const featureR   = randomBetween(3, 5);
   const uxR        = randomBetween(3, 5);
   const contractR  = randomBetween(3, 5);
-  const overallR   = +(( featureR + uxR + contractR ) / 3).toFixed(1);
+  const overallR   = Math.round(( featureR + uxR + contractR ) / 3);
   const comment    = FEEDBACK_COMMENTS[i];
   const feedbackAt = randomDate(new Date("2026-08-15T00:00:00Z"), MONTH_END);
 

@@ -58,10 +58,10 @@ export async function GET() {
       const bugs = r.bugsReported || r.bugs_reported || "N/A";
       const improvements = r.improvements || "";
       const recommend = r.recommend || "Yes";
-      const overall = r.overallRating ?? r.overall_rating ?? 5;
-      const feature = r.featureRating ?? r.feature_rating ?? overall;
-      const ux = r.uxRating ?? r.ux_rating ?? overall;
-      const contract = r.contractRating ?? r.contract_rating ?? overall;
+      const overall = Math.round(Number(r.overallRating ?? r.overall_rating ?? 5));
+      const feature = Math.round(Number(r.featureRating ?? r.feature_rating ?? overall));
+      const ux = Math.round(Number(r.uxRating ?? r.ux_rating ?? overall));
+      const contract = Math.round(Number(r.contractRating ?? r.contract_rating ?? overall));
       const comment = r.comment || r.feedback_comment || "";
       const submittedAt = r.submittedAt || r.submitted_at || r.feedback_timestamp || new Date().toISOString();
 

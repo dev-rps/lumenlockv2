@@ -122,10 +122,10 @@ export async function GET() {
       if (res.rows && res.rows.length > 0) {
         const feedback = res.rows.map((row) => ({
           ...row,
-          overallRating: Number(row.overallRating),
-          featureRating: Number(row.featureRating || row.overallRating),
-          uxRating: Number(row.uxRating || row.overallRating),
-          contractRating: Number(row.contractRating || row.overallRating),
+          overallRating: Math.round(Number(row.overallRating)),
+          featureRating: Math.round(Number(row.featureRating || row.overallRating)),
+          uxRating: Math.round(Number(row.uxRating || row.overallRating)),
+          contractRating: Math.round(Number(row.contractRating || row.overallRating)),
         }));
         const avg = +(feedback.reduce((s, f) => s + f.overallRating, 0) / feedback.length).toFixed(1);
         return NextResponse.json({ feedback, count: feedback.length, avgRating: avg });
