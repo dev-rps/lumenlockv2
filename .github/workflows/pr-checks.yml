@@ -91,9 +91,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend
-        run: |
-          rm -rf node_modules
-          npm install
+        run: npm ci
 
       - name: TypeScript type check
         working-directory: frontend
@@ -119,9 +117,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend
-        run: |
-          rm -rf node_modules
-          npm install
+        run: npm ci
 
       - name: Run Vitest tests
         working-directory: frontend
