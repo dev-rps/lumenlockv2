@@ -50,9 +50,7 @@ jobs:
 
       - name: Install frontend deps
         working-directory: frontend
-        run: |
-          rm -rf node_modules package-lock.json
-          npm install
+        run: npm install
 
       - name: Run frontend tests
         working-directory: frontend
@@ -120,9 +118,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend
-        run: |
-          rm -rf node_modules package-lock.json
-          npm install
+        run: npm install
 
       - name: Build Next.js
         working-directory: frontend
