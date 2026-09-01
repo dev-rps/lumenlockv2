@@ -1,4 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+// Mock the Neon DB module before any imports so no real connection is made.
+// auth.ts already has SEEDED_USERS + MEMORY_USERS fallback when DB returns
+// empty rows, so all tests work offline without DATABASE_URL.
+vi.mock("@/app/lib/db", () => ({
+  pool: { query: async () => ({ rows: [], rowCount: 0 }), end: async () => {} },
+  query: async () => ({ rows: [], rowCount: 0 }),
+  initDatabase: async () => {},
+}));
+
 import { verifyCredentials, createUser, findUserByEmail } from "@/app/lib/auth";
 
 describe("Authentication System", () => {
