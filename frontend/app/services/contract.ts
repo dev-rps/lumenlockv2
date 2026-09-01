@@ -112,6 +112,7 @@ let fallbackEscrows: EscrowRecord[] = [
 
 /**
  * Triggers wallet transaction signing flow using Freighter, StellarWalletsKit, or simulated signing session.
+ * Attempts real Freighter signing first; falls back to a simulated hash for demo/testnet purposes.
  */
 async function requestWalletSignature(
   actionName: string,
@@ -125,32 +126,74 @@ async function requestWalletSignature(
     return generatedTxHash;
   }
 
+  // 1. Try Freighter wallet API — actually invoke the signing popup
   try {
-    // 1. Try Freighter wallet API if present in browser
     const freighterApi = await import("@stellar/freighter-api");
     if (freighterApi && typeof freighterApi.isAllowed === "function") {
-      const allowed = await freighterApi.isAllowed();
-      if (allowed && typeof freighterApi.signTransaction === "function") {
-        console.log(`[Freighter Wallet] Requesting wallet signature for operation: ${actionName}`);
+      const isConnected = await freighterApi.isAllowed();
+      if (isConnected && typeof freighterApi.signTransaction === "function") {
+        console.log(`[Freighter] Requesting signature for: ${actionName} | signer: ${signerAddress}`);
+        // Build a minimal fee-bump XDR memo transaction so Freighter shows a real popup.
+        // For a full Soroban invoke, the XDR would be built via stellar-sdk invokeContractFunction.
+        // We use a simple account memo tx here as the demo contract XDR placeholder.
+        try {
+          const { Transaction, Networks, TransactionBuilder, Account, Operation, Asset, Memo } = await import("@stellar/stellar-sdk");
+          void Transaction; // imported for type
+          const networkPassphrase =
+            process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE ||
+            Networks.TESTNET;
+          // Build a minimal valid transaction (0-op sequence bump) for the signing popup
+          const sourceAccount = new Account(signerAddress || "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN", "0");
+          const tx = new TransactionBuilder(sourceAccount, {
+            fee: "100",
+            networkPassphrase,
+          })
+            .addOperation(Operation.payment({
+              destination: signerAddress || "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN",
+              asset: Asset.native(),
+              amount: "0.0000001",
+            }))
+            .addMemo(Memo.text(actionName.slice(0, 28)))
+            .setTimeout(30)
+            .build();
+
+          const result = await freighterApi.signTransaction(tx.toXDR(), {
+            network: process.env.NEXT_PUBLIC_STELLAR_NETWORK || "TESTNET",
+            networkPassphrase,
+            accountToSign: signerAddress,
+          } as any);
+
+          if (result && (result as any).signedTxXdr) {
+            // Hash the signed XDR as a proxy tx hash
+            const signed: string = (result as any).signedTxXdr;
+            const encoder = new TextEncoder();
+            const data = encoder.encode(signed);
+            const hashBuf = await crypto.subtle.digest("SHA-256", data);
+            const hashArr = Array.from(new Uint8Array(hashBuf));
+            return "0x" + hashArr.map((b) => b.toString(16).padStart(2, "0")).join("");
+          }
+        } catch (txBuildErr) {
+          console.warn("[Freighter] Could not build/sign transaction XDR, using simulated hash:", txBuildErr);
+        }
       }
     }
   } catch {
-    // Freighter extension check optional
+    // Freighter extension not installed — fall through to simulation
   }
 
+  // 2. Try StellarWalletsKit if active wallet session exists
   try {
-    // 2. Try StellarWalletsKit if active wallet exists
     const { StellarWalletsKit } = await import("@creit.tech/stellar-wallets-kit");
     if (signerAddress && typeof StellarWalletsKit !== "undefined") {
       console.log(`[StellarWalletsKit] Signature requested for address: ${signerAddress}`);
     }
   } catch {
-    // Kit check optional
+    // Kit not available
   }
 
-  // Artificial realistic network confirmation delay (500ms) for smooth UX feedback
+  // 3. Simulated confirmation delay for smooth demo UX
   await new Promise((r) => setTimeout(r, 400));
-
+  console.log(`[Simulated] Wallet signature for: ${actionName}`);
   return generatedTxHash;
 }
 
@@ -231,28 +274,34 @@ export const ContractService = {
       completedEscrows: 0,
     };
 
-    // Save to persistent API endpoint for cross-account visibility
+    // Save to persistent Postgres-backed API endpoint for cross-account visibility
     const url = getApiUrl("/api/listings");
     if (url) {
-      try {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...newListing,
-            rawPrice: rawPrice.toString(),
-          }),
-        });
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...newListing,
+          rawPrice: rawPrice.toString(),
+        }),
+      });
 
-        if (res.ok) {
-          const data = await res.json();
-          return { listingId: data.listingId || newId, txHash };
-        }
-      } catch (err) {
-        console.warn("Failed to post listing to API handler:", err);
+      if (res.ok) {
+        const data = await res.json();
+        // Always use the server-assigned ID (timestamp-based, guaranteed unique)
+        return { listingId: data.listingId || newId, txHash };
       }
+
+      // API returned an error — surface it so the caller shows a toast instead of silent data loss
+      let errorMsg = "Failed to save listing to database";
+      try {
+        const errData = await res.json();
+        if (errData?.error) errorMsg = errData.error;
+      } catch { /* ignore parse error */ }
+      throw new Error(errorMsg);
     }
 
+    // No API URL available (SSR or file:// origin) — use in-memory fallback for local dev only
     fallbackListings.unshift(newListing);
     return { listingId: newId, txHash };
   },
